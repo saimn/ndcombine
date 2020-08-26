@@ -30,15 +30,12 @@ def ndcombine(float [:,:] data,
     cdef float *tmpdata = <float *> malloc(npoints * sizeof(float))
     cdef float *tmpvar = <float *> malloc(npoints * sizeof(float))
     cdef unsigned short *tmpmask = <unsigned short *> malloc(npoints * sizeof(unsigned short))
-    cdef unsigned short *rejmask
 
     cdef rejection_methods rejector
     if reject_method == 'sigclip':
         rejector = SIGCLIP
-        rejmask = <unsigned short *> malloc(npoints * sizeof(unsigned short))
     elif reject_method == 'none':
         rejector = NONE
-        rejmask = tmpmask
     else:
         raise ValueError
 
@@ -66,16 +63,14 @@ def ndcombine(float [:,:] data,
             #print('  mask:', np.asarray(<unsigned short[:npoints]>tmpmask))
 
             if rejector == SIGCLIP:
-                cy_sigma_clip(tmpdata, tmpvar, tmpmask, rejmask, npoints, 3, 3, 0, 10, 1, 0, 0)
+                cy_sigma_clip(tmpdata, tmpvar, tmpmask, npoints, 3, 3, 0, 10, 1, 0, 0)
 
-            #print('  rejm:', np.asarray(<unsigned short[:npoints]>rejmask))
+            #print('  rejm:', np.asarray(<unsigned short[:npoints]>tmpmask))
 
-            outdata[i] = combine_func(tmpdata, rejmask, npoints)
+            outdata[i] = combine_func(tmpdata, tmpmask, npoints)
             for j in range(npoints):
-                outmask[j, i] = rejmask[j]
+                outmask[j, i] = tmpmask[j]
 
-    if reject_method == 'sigclip':
-        free(rejmask)
     free(tmpdata)
     free(tmpmask)
     free(tmpvar)

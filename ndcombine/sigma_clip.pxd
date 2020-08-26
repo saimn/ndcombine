@@ -3,7 +3,6 @@
 cdef void cy_sigma_clip(float data [],
                         float variance [],
                         unsigned short mask [],
-                        unsigned short outmask [],
                         size_t npoints,
                         double lsigma,
                         double hsigma,

@@ -53,19 +53,16 @@ def sigma_clip(float [:] data,
 
     cdef int has_var=0
     cdef float* cvar=NULL
-    cdef unsigned short* cmask=NULL
 
     if variance is not None:
         has_var = 1
         cvar = &variance[0]
 
-    if mask is None:
-        mask = np.zeros(data.shape[0], dtype=np.uint16, order='C')
-    cmask = &mask[0]
+    if mask is not None:
+        outmask[:] = mask
 
     cy_sigma_clip(&data[0],
                   cvar,
-                  cmask,
                   &outmask_view[0],
                   data.shape[0],
                   lsigma,
@@ -84,7 +81,6 @@ def sigma_clip(float [:] data,
 cdef void cy_sigma_clip(float data [],
                         float variance [],
                         unsigned short mask [],
-                        unsigned short outmask [],
                         size_t npoints,
                         double lsigma,
                         double hsigma,
@@ -106,10 +102,7 @@ cdef void cy_sigma_clip(float data [],
         pass
 
     for i in range(npoints):
-        if mask[i] > 0:
-            outmask[i] = 1
-        else:
-            outmask[i] = 0
+        if mask[i] == 0:
             ngood += 1
 
     #if has_var and use_variance:
@@ -122,16 +115,17 @@ cdef void cy_sigma_clip(float data [],
 
     while niter < max_iters:
 
-        compute_mean_std(data, outmask, result, use_median, npoints)
+        compute_mean_std(data, mask, result, use_median, npoints)
         avg = result[0]
         std = result[1]
 
         new_ngood = 0
         low_limit = avg - lsigma * std
         high_limit = avg + hsigma * std
+
         for i in range(npoints):
             if data[i] < low_limit or data[i] > high_limit:
-                outmask[i] = 1
+                mask[i] = 1
             else:
                 new_ngood += 1
 
