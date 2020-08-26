@@ -48,7 +48,21 @@ else:
         profile.print_stats()
     else:
         n = 5
+
         t0 = time.time()
         for _ in range(n):
-            combine_arrays(ccds, method='mean', clipping_method='sigclip')
-        print('Mean of 5 : {:.2f} sec.'.format((time.time() - t0) / n))
+            combine_arrays(ccds,
+                           method='mean',
+                           clipping_method='sigclip',
+                           num_threads=0)
+        print('Mean of 5 with max threads : {:.2f} sec.'.format(
+            (time.time() - t0) / n))
+
+        t0 = time.time()
+        for _ in range(n):
+            combine_arrays(ccds,
+                           method='mean',
+                           clipping_method='sigclip',
+                           num_threads=1)
+        print('Mean of 5 with 1 thread : {:.2f} sec.'.format(
+            (time.time() - t0) / n))

@@ -11,6 +11,8 @@ ext_modules = [
         # libraries=[...],
         # library_dirs=[...]
         define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+        extra_compile_args=['-fopenmp'],
+        extra_link_args=['-fopenmp'],
     ),
 ]
 

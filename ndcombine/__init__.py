@@ -17,6 +17,7 @@ def combine_arrays(
     # clip_extrema=False, nlow=1, nhigh=1,
     # minmax_clip=False, minmax_clip_min=None, minmax_clip_max=None,
     # sigma_clip=False, sigma_clip_low_thresh=3, sigma_clip_high_thresh=3,
+    num_threads=0,
 ):
     """
     Parameters:
@@ -54,7 +55,8 @@ def combine_arrays(
     out, outmask = ndcombine(data,
                              mask,
                              combine_method=method,
-                             reject_method=clipping_method)
+                             reject_method=clipping_method,
+                             num_threads=num_threads)
 
     out = out.reshape(shape[1:])
     out = NDData(out)

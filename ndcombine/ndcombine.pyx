@@ -2,6 +2,7 @@
 import numpy as np
 cimport numpy as np
 cimport cython
+from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, free
 
 from ndcombine.sigma_clip cimport cy_sigma_clip
@@ -21,15 +22,16 @@ def ndcombine(float [:,:] data,
               #float [:,:] variance,
               unsigned short [:,:] mask,
               combine_method='mean',
-              reject_method='none'):
+              reject_method='none',
+              int num_threads=0):
 
     cdef size_t npoints = data.shape[0]
     cdef size_t npix = data.shape[1]
-    cdef size_t i
+    cdef size_t i, j
 
-    cdef float *tmpdata = <float *> malloc(npoints * sizeof(float))
-    cdef float *tmpvar = <float *> malloc(npoints * sizeof(float))
-    cdef unsigned short *tmpmask = <unsigned short *> malloc(npoints * sizeof(unsigned short))
+    cdef float *tmpdata
+    cdef float *tmpvar
+    cdef unsigned short *tmpmask
 
     cdef rejection_methods rejector
     if reject_method == 'sigclip':
@@ -52,8 +54,12 @@ def ndcombine(float [:,:] data,
     else:
         raise ValueError
 
-    with nogil:
-        for i in range(npix):
+    with nogil, parallel(num_threads=num_threads):
+        tmpdata = <float *> malloc(npoints * sizeof(float))
+        tmpvar = <float *> malloc(npoints * sizeof(float))
+        tmpmask = <unsigned short *> malloc(npoints * sizeof(unsigned short))
+
+        for i in prange(npix):
             for j in range(npoints):
                 tmpdata[j] = data[j, i]
                 tmpmask[j] = mask[j, i]
@@ -71,8 +77,8 @@ def ndcombine(float [:,:] data,
             for j in range(npoints):
                 outmask[j, i] = tmpmask[j]
 
-    free(tmpdata)
-    free(tmpmask)
-    free(tmpvar)
+        free(tmpdata)
+        free(tmpmask)
+        free(tmpvar)
 
     return outarr, outmaskarr
