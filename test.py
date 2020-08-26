@@ -13,17 +13,21 @@ case = sys.argv[1] if len(sys.argv) > 1 else 'default'
 
 if case == 'sigclip':
     data = np.array([1., 2, 3, 2, 3, 2, 1, 4, 2, 100], dtype=np.float32)
+    print('data      :', data)
+    print('astropy   :', sigma_clip_ast(data).mask.astype(int))
+    print('ndcombine :', sigma_clip(data, lsigma=3, hsigma=3, max_iters=10))
+
     mask = np.zeros_like(data, dtype=np.uint16)
-    var = np.zeros_like(data, dtype=np.float32)
-    print(sigma_clip_ast(data).mask.astype(int))
-    print(sigma_clip(data, var, mask, 3, 3, 0, 10, 1, 0, 0))
+    mask[7] = 1
+    print('\nwith mask :', mask)
+    print('astropy   :',
+          sigma_clip_ast(np.ma.array(data, mask=mask)).mask.astype(int))
+    print('ndcombine :',
+          sigma_clip(data, mask=mask, lsigma=3, hsigma=3, max_iters=10))
 
 elif case == 'simple':
-    data = np.array([
-        [1., 2, 3, 2, 3, 2, 1, 4, 2, 100],
-        [1., 2, 3, 2, 3, 2, 1, 4, 2, 100],
-        [1., 2, 3, 2, 3, 2, 1, 4, 2, 100],
-    ], dtype=np.float32).T
+    data = np.array([[1., 2, 3, 2, 3, 2, 1, 4, 2, 100]] * 3,
+                    dtype=np.float32).T
     print('data:\n', data)
     out = combine_arrays(data, method='mean', clipping_method='sigclip')
     print('outmask:\n', out.meta['REJMASK'])

@@ -8,49 +8,14 @@ from ndcombine.utils cimport compute_mean_std
 
 
 def sigma_clip(float [:] data,
-               float [:] variance,
-               unsigned short [:] mask,
+               float [:] variance=None,
+               unsigned short [:] mask=None,
                double lsigma=3,
                double hsigma=3,
-               int has_var=0,
                int max_iters=10,
                int use_median=1,
                int use_variance=0,
                int use_mad=0):
-
-    cdef unsigned short [:] outmask = np.zeros(mask.shape[0], dtype=np.uint16,
-                                               order='C')
-
-    cy_sigma_clip(&data[0],
-                  &variance[0],
-                  &mask[0],
-                  &outmask[0],
-                  mask.shape[0],
-                  lsigma,
-                  hsigma,
-                  has_var,
-                  max_iters,
-                  use_median,
-                  use_variance,
-                  use_mad)
-
-    return np.asarray(outmask)
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cdef void cy_sigma_clip(float data [],
-                        float variance [],
-                        unsigned short mask [],
-                        unsigned short outmask [],
-                        size_t npoints,
-                        double lsigma,
-                        double hsigma,
-                        int has_var,
-                        size_t max_iters,
-                        int use_median,
-                        int use_variance,
-                        int use_mad) nogil:
     """
     Iterative sigma-clipping.
 
@@ -82,6 +47,52 @@ cdef void cy_sigma_clip(float data [],
         (add description)
 
     """
+
+    outmask = np.zeros(data.shape[0], dtype=np.uint16, order='C')
+    cdef unsigned short [:] outmask_view = outmask
+
+    cdef int has_var=0
+    cdef float* cvar=NULL
+    cdef unsigned short* cmask=NULL
+
+    if variance is not None:
+        has_var = 1
+        cvar = &variance[0]
+
+    if mask is None:
+        mask = np.zeros(data.shape[0], dtype=np.uint16, order='C')
+    cmask = &mask[0]
+
+    cy_sigma_clip(&data[0],
+                  cvar,
+                  cmask,
+                  &outmask_view[0],
+                  data.shape[0],
+                  lsigma,
+                  hsigma,
+                  has_var,
+                  max_iters,
+                  use_median,
+                  use_variance,
+                  use_mad)
+
+    return np.asarray(outmask)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void cy_sigma_clip(float data [],
+                        float variance [],
+                        unsigned short mask [],
+                        unsigned short outmask [],
+                        size_t npoints,
+                        double lsigma,
+                        double hsigma,
+                        int has_var,
+                        size_t max_iters,
+                        int use_median,
+                        int use_variance,
+                        int use_mad) nogil:
 
     cdef size_t i, ngood=0, new_ngood, niter=0
     cdef double avg, var, std
