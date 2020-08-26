@@ -1,7 +1,7 @@
 # cython: language_level=3
 
-cdef void cy_sigma_clip(float data [],
-                        float variance [],
+cdef void cy_sigma_clip(const float data [],
+                        const float variance [],
                         unsigned short mask [],
                         size_t npoints,
                         double lsigma,
