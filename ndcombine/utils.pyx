@@ -23,21 +23,6 @@ cdef float compute_median(const float data[],
                           size_t data_size) nogil:
     """
     One-dimensional true median, with optional masking.
-
-    Parameters
-    ----------
-    data : float array
-        (add description)
-    mask : unsigned short array
-        (add description)
-    data_size : int
-        (add description)
-
-    Returns
-    -------
-    med : (add type)
-        (add description)
-
     """
     cdef size_t i, j, k, l, m, nused=0
     cdef int ncycles, cycle
