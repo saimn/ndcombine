@@ -1,5 +1,3 @@
-import time
-
 import numpy as np
 from astropy.nddata import NDData
 
@@ -34,27 +32,29 @@ def combine_arrays(
     if isinstance(data[0], NDData):
         ndds = data
         data = np.asarray([nd.data for nd in ndds], dtype=np.float32)
-        mask = np.asarray([(nd.mask if nd.mask is not None
-                            else np.zeros(nd.shape, dtype=np.uint16))
-                           for nd in ndds],
-                          dtype=np.uint16)
+        if ndds[0].mask is not None:
+            # For now suppose that all NDData objects have a mask if the
+            # first object has one.
+            mask = np.asarray([nd.mask for nd in ndds], dtype=np.uint16)
+        else:
+            mask = None
     else:
         data = np.asarray(data, dtype=np.float32)
         if mask is not None:
             mask = np.asarray(mask, dtype=np.uint16)
-        else:
-            mask = np.zeros_like(data, dtype=np.uint16)
 
     shape = data.shape
     data = data.reshape(data.shape[0], -1)
-    mask = mask.reshape(mask.shape[0], -1)
 
-    t0 = time.time()
+    if mask is None:
+        mask = np.zeros_like(data, dtype=np.uint16)
+    else:
+        mask = mask.reshape(mask.shape[0], -1)
+
     out, outmask = ndcombine(data,
                              mask,
                              combine_method=method,
                              reject_method=clipping_method)
-    print(time.time() - t0)
 
     out = out.reshape(shape[1:])
     out = NDData(out)
