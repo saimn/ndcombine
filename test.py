@@ -23,9 +23,7 @@ elif case == 'simple':
         [1., 2, 3, 2, 3, 2, 1, 4, 2, 100],
         [1., 2, 3, 2, 3, 2, 1, 4, 2, 100],
         [1., 2, 3, 2, 3, 2, 1, 4, 2, 100],
-    ],
-                    dtype=np.float32).T
-    # mask = np.zeros_like(data, dtype=np.uint16)
+    ], dtype=np.float32).T
     print('data:\n', data)
     out = combine_arrays(data, method='mean', clipping_method='sigclip')
     print('outmask:\n', out.meta['REJMASK'])
@@ -35,20 +33,18 @@ else:
     datadir = Path(os.path.expanduser('~/data/combiner'))
     flist = list(datadir.glob('image-*.fits'))
     ccds = [CCDData.read(f) for f in flist]
-    # data = np.array([ccd.data for ccd in ccds])
-    # data = data.reshape(data.shape[0], -1)
-    # mask = np.zeros_like(data, dtype=np.uint16)
 
     if case == 'profile':
         import line_profiler
-        # profile = line_profiler.LineProfiler(ndcombine)
-        # profile.runcall(ndcombine,
-        #                 data,
-        #                 mask,
-        #                 combine_method='mean',
-        #                 reject_method='sigclip')
-        # profile.print_stats()
+        profile = line_profiler.LineProfiler(combine_arrays)
+        profile.runcall(combine_arrays,
+                        ccds,
+                        method='mean',
+                        clipping_method='sigclip')
+        profile.print_stats()
     else:
+        n = 5
         t0 = time.time()
-        out = combine_arrays(ccds, method='mean', clipping_method='sigclip')
-        print(time.time() - t0)
+        for _ in range(n):
+            combine_arrays(ccds, method='mean', clipping_method='sigclip')
+        print('Mean of 5 : {:.2f} sec.'.format((time.time() - t0) / n))
