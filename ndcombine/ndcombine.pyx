@@ -6,7 +6,7 @@ from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, free
 
 from ndcombine.sigma_clip cimport cy_sigma_clip
-from ndcombine.utils cimport compute_mean, compute_median
+from ndcombine.utils cimport compute_mean, compute_median, compute_mean_var
 
 ctypedef unsigned short mask_t
 
@@ -19,8 +19,8 @@ cdef enum rejection_methods:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def ndcombine(float [:,:] data,
-              #float [:,:] variance,
               unsigned short [:,:] mask,
+              float [:,:] variance=None,
               combine_method='mean',
               reject_method='none',
               int num_threads=0):
@@ -45,13 +45,16 @@ def ndcombine(float [:,:] data,
     outmaskarr = np.zeros((npoints, npix), dtype=np.uint16, order='C')
 
     cdef float [:] outdata = outarr
+    cdef float [:] outvar
     cdef unsigned short [:,:] outmask = outmaskarr
 
-    if combine_method == 'mean':
-        combine_func = compute_mean
-    elif combine_method == 'median':
-        combine_func = compute_median
+    if variance is not None:
+        outvararr = np.zeros(npix, dtype=np.float32, order='C')
+        outvar = outvararr
     else:
+        outvararr = None
+
+    if combine_method != 'mean' and combine_method != 'median':
         raise ValueError
 
     with nogil, parallel(num_threads=num_threads):
@@ -73,7 +76,16 @@ def ndcombine(float [:,:] data,
 
             #print('  rejm:', np.asarray(<unsigned short[:npoints]>tmpmask))
 
-            outdata[i] = combine_func(tmpdata, tmpmask, npoints)
+            if combine_method == 'mean':
+                outdata[i] = compute_mean(tmpdata, tmpmask, npoints)
+                if variance is not None:
+                    for j in range(npoints):
+                        tmpvar[j] = variance[j, i]
+                    outvar[i] = compute_mean_var(tmpvar, tmpmask, npoints)
+
+            elif combine_method == 'median':
+                outdata[i] = compute_median(tmpdata, tmpmask, npoints)
+
             for j in range(npoints):
                 outmask[j, i] = tmpmask[j]
 
@@ -81,4 +93,4 @@ def ndcombine(float [:,:] data,
         free(tmpmask)
         free(tmpvar)
 
-    return outarr, outmaskarr
+    return outarr, outvararr, outmaskarr

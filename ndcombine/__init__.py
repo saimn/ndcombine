@@ -1,5 +1,5 @@
 import numpy as np
-from astropy.nddata import NDData
+from astropy.nddata import NDData, VarianceUncertainty
 
 from .ndcombine import ndcombine
 from .sigma_clip import sigma_clip
@@ -33,32 +33,51 @@ def combine_arrays(
     if isinstance(data[0], NDData):
         ndds = data
         data = np.asarray([nd.data for nd in ndds], dtype=np.float32)
+
         if ndds[0].mask is not None:
             # For now suppose that all NDData objects have a mask if the
             # first object has one.
             mask = np.asarray([nd.mask for nd in ndds], dtype=np.uint16)
         else:
             mask = None
+
+        if ndds[0].uncertainty is not None:
+            if not isinstance(ndds[0].uncertainty, VarianceUncertainty):
+                raise ValueError('TODO')
+            # For now suppose that all NDData objects have a mask if the
+            # first object has one.
+            variance = np.asarray([nd.uncertainty.array for nd in ndds],
+                                  dtype=np.uint16)
+        else:
+            variance = None
     else:
         data = np.asarray(data, dtype=np.float32)
         if mask is not None:
             mask = np.asarray(mask, dtype=np.uint16)
+        if variance is not None:
+            variance = np.asarray(variance, dtype=np.float32)
 
     shape = data.shape
     data = data.reshape(data.shape[0], -1)
+
+    if variance is not None:
+        variance = variance.reshape(data.shape[0], -1)
 
     if mask is None:
         mask = np.zeros_like(data, dtype=np.uint16)
     else:
         mask = mask.reshape(mask.shape[0], -1)
 
-    out, outmask = ndcombine(data,
-                             mask,
-                             combine_method=method,
-                             reject_method=clipping_method,
-                             num_threads=num_threads)
+    outdata, outvar, outmask = ndcombine(data,
+                                         mask,
+                                         combine_method=method,
+                                         reject_method=clipping_method,
+                                         num_threads=num_threads)
 
-    out = out.reshape(shape[1:])
-    out = NDData(out)
+    outdata = outdata.reshape(shape[1:])
+    if outvar is not None:
+        outvar = VarianceUncertainty(outvar.reshape(shape[1:]))
+
+    out = NDData(outdata, uncertainty=outvar)
     out.meta['REJMASK'] = outmask.reshape(shape)
     return out
