@@ -15,6 +15,11 @@ cdef enum rejection_methods:
     MINMAX,
     NONE
 
+cdef enum combine_methods:
+    MEAN,
+    MEDIAN,
+    SUM
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -41,21 +46,25 @@ def ndcombine(float [:,:] data,
     else:
         raise ValueError
 
+    cdef combine_methods combiner
+    if combine_method == 'mean':
+        combiner = MEAN
+    elif combine_method == 'median':
+        combiner = MEDIAN
+    else:
+        raise ValueError
+
     outarr = np.zeros(npix, dtype=np.float32, order='C')
     outmaskarr = np.zeros((npoints, npix), dtype=np.uint16, order='C')
 
-    cdef float [:] outdata = outarr
-    cdef float [:] outvar
-    cdef unsigned short [:,:] outmask = outmaskarr
-
     if variance is not None:
         outvararr = np.zeros(npix, dtype=np.float32, order='C')
-        outvar = outvararr
     else:
         outvararr = None
 
-    if combine_method != 'mean' and combine_method != 'median':
-        raise ValueError
+    cdef float [:] outdata = outarr
+    cdef float [:] outvar = outvararr
+    cdef unsigned short [:,:] outmask = outmaskarr
 
     with nogil, parallel(num_threads=num_threads):
         tmpdata = <float *> malloc(npoints * sizeof(float))
@@ -76,14 +85,14 @@ def ndcombine(float [:,:] data,
 
             #print('  rejm:', np.asarray(<unsigned short[:npoints]>tmpmask))
 
-            if combine_method == 'mean':
+            if combiner == MEAN:
                 outdata[i] = compute_mean(tmpdata, tmpmask, npoints)
                 if variance is not None:
                     for j in range(npoints):
                         tmpvar[j] = variance[j, i]
                     outvar[i] = compute_mean_var(tmpvar, tmpmask, npoints)
 
-            elif combine_method == 'median':
+            elif combiner == MEDIAN:
                 outdata[i] = compute_median(tmpdata, tmpmask, npoints)
 
             for j in range(npoints):
