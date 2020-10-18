@@ -30,9 +30,9 @@ def ndcombine(float [:,:] data,
               reject_method='none',
               int num_threads=0):
 
-    cdef size_t npoints = data.shape[0]
-    cdef size_t npix = data.shape[1]
-    cdef size_t i, j
+    cdef ssize_t npoints = data.shape[0]
+    cdef ssize_t npix = data.shape[1]
+    cdef ssize_t i, j
 
     cdef float *tmpdata
     cdef float *tmpvar
