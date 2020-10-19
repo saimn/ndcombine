@@ -28,6 +28,9 @@ def ndcombine(float [:,:] data,
               float [:,:] variance=None,
               combine_method='mean',
               reject_method='none',
+              double lsigma=3,
+              double hsigma=3,
+              size_t max_iters=100,
               int num_threads=0):
 
     cdef ssize_t npoints = data.shape[0]
@@ -81,7 +84,8 @@ def ndcombine(float [:,:] data,
             #print('  mask:', np.asarray(<unsigned short[:npoints]>tmpmask))
 
             if rejector == SIGCLIP:
-                cy_sigma_clip(tmpdata, tmpvar, tmpmask, npoints, 3, 3, 0, 10, 1, 0, 0)
+                cy_sigma_clip(tmpdata, tmpvar, tmpmask, npoints, lsigma, hsigma,
+                              0, max_iters, 1, 0, 0)
 
             #print('  rejm:', np.asarray(<unsigned short[:npoints]>tmpmask))
 

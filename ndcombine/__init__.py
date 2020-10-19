@@ -12,7 +12,7 @@ def combine_arrays(
     method='mean',
     weights=None,
     clipping_method='none',
-    clip_limits=(-3, 3),
+    clip_limits=(3, 3),
     # clipping methods
     # clip_extrema=False, nlow=1, nhigh=1,
     # minmax_clip=False, minmax_clip_min=None, minmax_clip_max=None,
@@ -24,7 +24,7 @@ def combine_arrays(
     -----------
     data : list of ndarray or list of NDData
         Data.
-    method : str, {'average', 'median', 'sum'}
+    method : str, {'mean', 'median', 'sum'}
         Combination method.
     clipping_method : str, {'minmax', 'extrema', 'sigmaclip', 'none'}
         Clipping method.
@@ -68,10 +68,16 @@ def combine_arrays(
     else:
         mask = mask.reshape(mask.shape[0], -1)
 
+    lsigma, hsigma = clip_limits
+    max_iters = 100
+
     outdata, outvar, outmask = ndcombine(data,
                                          mask,
                                          combine_method=method,
                                          reject_method=clipping_method,
+                                         lsigma=lsigma,
+                                         hsigma=hsigma,
+                                         max_iters=max_iters,
                                          num_threads=num_threads)
 
     outdata = outdata.reshape(shape[1:])
