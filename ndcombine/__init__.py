@@ -47,7 +47,7 @@ def combine_arrays(
             # For now suppose that all NDData objects have a mask if the
             # first object has one.
             variance = np.asarray([nd.uncertainty.array for nd in ndds],
-                                  dtype=np.uint16)
+                                  dtype=np.float32)
         else:
             variance = None
     else:
@@ -71,14 +71,17 @@ def combine_arrays(
     lsigma, hsigma = clip_limits
     max_iters = 100
 
-    outdata, outvar, outmask = ndcombine(data,
-                                         mask,
-                                         combine_method=method,
-                                         reject_method=clipping_method,
-                                         lsigma=lsigma,
-                                         hsigma=hsigma,
-                                         max_iters=max_iters,
-                                         num_threads=num_threads)
+    outdata, outvar, outmask = ndcombine(
+        data,
+        mask,
+        combine_method=method,
+        hsigma=hsigma,
+        lsigma=lsigma,
+        max_iters=max_iters,
+        num_threads=num_threads,
+        reject_method=clipping_method,
+        variance=variance,
+    )
 
     outdata = outdata.reshape(shape[1:])
     if outvar is not None:
