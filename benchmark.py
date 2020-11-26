@@ -9,6 +9,7 @@ import numpy as np
 from astropy.nddata import CCDData
 
 from ndcombine import combine_arrays, ndcombine
+from ndcombine.tests.helpers import make_fake_data
 
 data = None
 mask = None
@@ -44,55 +45,63 @@ def test_median():
     def run(label, command):
         res = timeit.repeat(command, **kwargs)
         res = np.array(res) / nb
-        print(res)
         print(f'{label:20s}: {np.mean(res):.3f}s ± {np.std(res):.3f}s')
 
     run('np.median', 'np.median(data)')
     run('np.ma.median', 'np.ma.median(datamasked, axis=0)')
     run('bn.median', 'bn.median(data)')
-    run('ndcombine 1 thread',
-        "ndcombine(data, mask, combine_method='median', "
+    run(
+        'ndcombine 1 thread', "ndcombine(data, mask, combine_method='median', "
         "reject_method='none', num_threads=1)")
-    run('ndcombine',
-        "ndcombine(data, mask, combine_method='median', "
+    run(
+        'ndcombine', "ndcombine(data, mask, combine_method='median', "
         "reject_method='none')")
 
 
-def test_files(case):
+def get_ccddata():
     datadir = Path(os.path.expanduser('~/data/combiner'))
+
+    if not datadir.exists():
+        print('Creating test data')
+        # datadir.mkdir(parents=True)
+        make_fake_data(20, datadir, nsources=500)
+
     flist = list(datadir.glob('image-*.fits'))
-    ccds = [CCDData.read(f) for f in flist]
+    return [CCDData.read(f) for f in flist]
 
-    if case == 'profile':
-        import line_profiler
-        profile = line_profiler.LineProfiler(combine_arrays)
-        profile.runcall(combine_arrays,
-                        ccds,
-                        method='mean',
-                        clipping_method='sigclip')
-        profile.print_stats()
-    else:
-        n = 5
 
-        t0 = time.time()
-        for _ in range(n):
-            print('.', end='', flush=True)
-            combine_arrays(ccds,
-                           method='mean',
-                           clipping_method='sigclip',
-                           num_threads=0)
-        print('\nMean of 5 with max threads : {:.2f} sec.'.format(
-            (time.time() - t0) / n))
+def profile(ccds):
+    import line_profiler
+    profile = line_profiler.LineProfiler(combine_arrays)
+    profile.runcall(combine_arrays,
+                    ccds,
+                    method='mean',
+                    clipping_method='sigclip')
+    profile.print_stats()
 
-        t0 = time.time()
-        for _ in range(n):
-            print('.', end='', flush=True)
-            combine_arrays(ccds,
-                           method='mean',
-                           clipping_method='sigclip',
-                           num_threads=1)
-        print('\nMean of 5 with 1 thread : {:.2f} sec.'.format(
-            (time.time() - t0) / n))
+
+def combine(ccds, n=5):
+    t0 = time.time()
+    for _ in range(n):
+        print('.', end='', flush=True)
+        combine_arrays(ccds,
+                       method='mean',
+                       clipping_method='sigclip',
+                       num_threads=1)
+    print('\nMean of 5 with 1 thread : {:.2f} sec.'.format(
+        (time.time() - t0) / n))
+
+
+def combine_parallel(ccds, n=5):
+    t0 = time.time()
+    for _ in range(n):
+        print('.', end='', flush=True)
+        combine_arrays(ccds,
+                       method='mean',
+                       clipping_method='sigclip',
+                       num_threads=0)
+    print('\nMean of 5 with max threads : {:.2f} sec.'.format(
+        (time.time() - t0) / n))
 
 
 if __name__ == "__main__":
@@ -101,4 +110,10 @@ if __name__ == "__main__":
     if case == 'median':
         test_median()
     else:
-        test_files(case)
+        ccds = get_ccddata()
+        if case == 'profile':
+            profile(ccds)
+        elif case == 'parallel':
+            combine_parallel(ccds)
+        else:
+            combine(ccds)
