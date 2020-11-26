@@ -7,37 +7,12 @@ from pathlib import Path
 import bottleneck as bn
 import numpy as np
 from astropy.nddata import CCDData
-from astropy.stats import sigma_clip as sigma_clip_ast
 
-from ndcombine import combine_arrays, ndcombine, sigma_clip
+from ndcombine import combine_arrays, ndcombine
 
 data = None
 mask = None
 datamasked = None
-
-
-def test_sigclip():
-    data = np.array([1., 2, 3, 2, 3, 2, 1, 4, 2, 100], dtype=np.float32)
-    print('data      :', data)
-    print('astropy   :', sigma_clip_ast(data).mask.astype(int))
-    print('ndcombine :', sigma_clip(data, lsigma=3, hsigma=3, max_iters=10))
-
-    mask = np.zeros_like(data, dtype=np.uint16)
-    mask[7] = 1
-    print('\nwith mask :', mask)
-    print('astropy   :',
-          sigma_clip_ast(np.ma.array(data, mask=mask)).mask.astype(int))
-    print('ndcombine :',
-          sigma_clip(data, mask=mask, lsigma=3, hsigma=3, max_iters=10))
-
-
-def test_simple():
-    data = np.array([[1., 2, 3, 2, 3, 2, 1, 4, 2, 100]] * 3,
-                    dtype=np.float32).T
-    print('data:\n', data)
-    out = combine_arrays(data, method='mean', clipping_method='sigclip')
-    print('outmask:\n', out.meta['REJMASK'])
-    print('outdata:\n', out.data)
 
 
 def test_median():
@@ -123,11 +98,7 @@ def test_files(case):
 if __name__ == "__main__":
     case = sys.argv[1] if len(sys.argv) > 1 else 'default'
 
-    if case == 'sigclip':
-        test_sigclip()
-    elif case == 'simple':
-        test_simple()
-    elif case == 'median':
+    if case == 'median':
         test_median()
     else:
         test_files(case)
