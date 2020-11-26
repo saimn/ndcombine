@@ -26,9 +26,9 @@ cdef enum combine_methods:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def ndcombine(float [:,:] data,
-              unsigned short [:,:] mask,
-              float [:,:] variance=None,
+def ndcombine(list list_of_data,
+              list list_of_mask,
+              list list_of_var=None,
               combine_method='mean',
               reject_method='none',
               double lsigma=3,
@@ -36,13 +36,29 @@ def ndcombine(float [:,:] data,
               size_t max_iters=100,
               int num_threads=0):
 
-    cdef ssize_t npoints = data.shape[0]
-    cdef ssize_t npix = data.shape[1]
+    cdef ssize_t npoints = len(list_of_data)
+    cdef ssize_t npix = list_of_data[0].shape[0]
     cdef ssize_t i, j
 
     cdef float *tmpdata
     cdef float *tmpvar
     cdef unsigned short *tmpmask
+
+    cdef float **data = <float **> malloc(npoints * sizeof(float *))
+    cdef unsigned short **mask = <unsigned short **> malloc(
+        npoints * sizeof(unsigned short*))
+    cdef float **var = <float **> malloc(npoints * sizeof(float *))
+
+    cdef np.ndarray[np.float32_t, ndim=1, mode="c"] temp_float
+    cdef np.ndarray[np.uint16_t, ndim=1, mode="c"] temp_uint
+
+    for i in range(npoints):
+        temp_float = list_of_data[i]
+        data[i]= &temp_float[0]
+        temp_float = list_of_var[i]
+        var[i] = &temp_float[0]
+        temp_uint = list_of_mask[i]
+        mask[i] = &temp_uint[0]
 
     cdef rejection_methods rejector
     if reject_method == 'sigclip':
@@ -63,7 +79,9 @@ def ndcombine(float [:,:] data,
     outarr = np.zeros(npix, dtype=np.float64, order='C')
     outmaskarr = np.zeros((npoints, npix), dtype=np.uint16, order='C')
 
-    if variance is not None:
+    cdef int use_variance = 1 if list_of_var is not None else 0
+
+    if use_variance is not None:
         outvararr = np.zeros(npix, dtype=np.float64, order='C')
     else:
         outvararr = None
@@ -79,8 +97,8 @@ def ndcombine(float [:,:] data,
 
         for i in prange(npix):
             for j in range(npoints):
-                tmpdata[j] = data[j, i]
-                tmpmask[j] = mask[j, i]
+                tmpdata[j] = data[j][i]
+                tmpmask[j] = mask[j][i]
 
             #print('- iter ', i)
             #print('  data:', np.asarray(<float[:npoints]>tmpdata))
@@ -94,9 +112,9 @@ def ndcombine(float [:,:] data,
 
             if combiner == MEAN:
                 outdata[i] = compute_mean(tmpdata, tmpmask, npoints)
-                if variance is not None:
+                if use_variance:
                     for j in range(npoints):
-                        tmpvar[j] = variance[j, i]
+                        tmpvar[j] = var[j][i]
                     outvar[i] = compute_mean_var(tmpvar, tmpmask, npoints)
 
             elif combiner == MEDIAN:
