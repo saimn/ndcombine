@@ -33,8 +33,17 @@ ext_modules = cythonize([extension],
 
 setup(
     name='ndcombine',
+    version='0.1',
+    description='Fast ND arrays combination',
+    author='Simon Conseil',
+    url='https://github.com/saimn/ndcombine',
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
     ext_modules=ext_modules,
+    python_requires='>=3.6',
+    install_requires=['numpy', 'astropy'],
+    extras_require={
+        'tests': ['pytest'],
+    }
 )
