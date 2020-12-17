@@ -1,4 +1,5 @@
 # cython: language_level=3
+
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -7,6 +8,8 @@ from libc.stdlib cimport malloc, free
 
 from ndcombine.sigma_clip cimport cy_sigma_clip
 from ndcombine.utils cimport compute_mean, compute_median, compute_mean_var
+
+np.import_array()
 
 ctypedef unsigned short mask_t
 

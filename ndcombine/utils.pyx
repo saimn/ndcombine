@@ -1,6 +1,5 @@
 # cython: language_level=3
-#import numpy as np
-#cimport numpy as np
+
 cimport cython
 from libc.math cimport sqrt
 from libc.math cimport isnan, NAN

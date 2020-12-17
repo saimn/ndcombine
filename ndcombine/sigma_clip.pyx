@@ -1,10 +1,13 @@
 # cython: language_level=3
+
 import numpy as np
 cimport numpy as np
 cimport cython
 from libc.math cimport sqrt
 #from cython cimport floating
 from ndcombine.utils cimport compute_mean_std
+
+np.import_array()
 
 
 def sigma_clip(float [:] data,
