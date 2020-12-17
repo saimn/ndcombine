@@ -1,20 +1,18 @@
-import numpy as np
 import os
-from setuptools import Extension, find_packages, setup
-from Cython.Build import cythonize
 
-ext_modules = [
-    Extension(
-        "*",
-        ["ndcombine/*.pyx"],
-        include_dirs=[np.get_include()],
-        # libraries=[...],
-        # library_dirs=[...]
-        define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
-        extra_compile_args=['-fopenmp'],
-        extra_link_args=['-fopenmp'],
-    ),
-]
+import numpy as np
+from Cython.Build import cythonize
+from extension_helpers import add_openmp_flags_if_available
+from setuptools import Extension, find_packages, setup
+
+extension = Extension(
+    "*",
+    ["ndcombine/*.pyx"],
+    include_dirs=[np.get_include()],
+    define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
+)
+
+add_openmp_flags_if_available(extension)
 
 compiler_directives = {}
 
@@ -29,7 +27,7 @@ if os.getenv('COVERAGE'):
 else:
     gdb_debug = False
 
-ext_modules = cythonize(ext_modules,
+ext_modules = cythonize([extension],
                         compiler_directives=compiler_directives,
                         gdb_debug=gdb_debug)
 
@@ -38,5 +36,5 @@ setup(
     packages=find_packages(),
     zip_safe=False,
     include_package_data=True,
-    ext_modules=cythonize(ext_modules),
+    ext_modules=ext_modules,
 )
