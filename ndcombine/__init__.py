@@ -2,7 +2,7 @@ import numpy as np
 from astropy.nddata import NDData, VarianceUncertainty
 
 from .ndcombine import ndcombine
-from .sigma_clip import sigma_clip
+from .sigma_clip import sigma_clip  # noqa
 
 try:
     from .version import version as __version__

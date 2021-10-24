@@ -1,4 +1,5 @@
-# From https://github.com/astropy/astroscrappy/blob/master/astroscrappy/tests/fake_data.py
+# Adapted from https://github.com/astropy/astroscrappy
+# (astroscrappy/tests/fake_data.py, licensed under BSD-3)
 
 import os
 
