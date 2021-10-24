@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools",
-            # "setuptools_scm",
+            "setuptools_scm",
             "wheel",
             "cython",
             "oldest-supported-numpy",

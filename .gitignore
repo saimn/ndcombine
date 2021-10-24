@@ -1,7 +1,9 @@
 build/
 dist/
 __pycache__/
+.coverage
 *.egg-info/
+.tox/
 *.so
 *.c
 *.html

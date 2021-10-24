@@ -4,6 +4,11 @@ from astropy.nddata import NDData, VarianceUncertainty
 from .ndcombine import ndcombine
 from .sigma_clip import sigma_clip
 
+try:
+    from .version import version as __version__
+except ImportError:
+    __version__ = ''
+
 
 def combine_arrays(
     data,
