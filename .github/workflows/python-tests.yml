@@ -55,8 +55,7 @@ jobs:
     - name: Run tests with coverage
       if: "matrix.coverage"
       run: |
-        pip install Cython extension-helpers numpy
-        COVERAGE=1 pip install -e .[test]
+        COVERAGE=1 pip install -e .[tests]
         pytest --pyargs ndcombine --cov ndcombine
     - name: Upload coverage to codecov
       if: "matrix.coverage"
