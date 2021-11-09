@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from astropy.nddata import NDData
 from astropy.stats import sigma_clip as sigma_clip_ast
-from numpy.testing import assert_array_almost_equal, assert_array_equal
+from numpy.testing import assert_array_equal
 
 from ndcombine import combine_arrays, sigma_clip
 
