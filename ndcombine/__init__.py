@@ -14,25 +14,31 @@ def combine_arrays(
     data,
     mask=None,
     variance=None,
-    method='mean',
-    weights=None,
-    clipping_method='none',
     clip_limits=(3, 3),
+    clipping_method='none',
+    method='mean',
+    num_threads=0,
+    # weights=None,
     # clipping methods
     # clip_extrema=False, nlow=1, nhigh=1,
     # minmax_clip=False, minmax_clip_min=None, minmax_clip_max=None,
     # sigma_clip=False, sigma_clip_low_thresh=3, sigma_clip_high_thresh=3,
-    num_threads=0,
 ):
     """
     Parameters:
     -----------
     data : list of ndarray or list of NDData
-        Data.
-    method : str, {'mean', 'median', 'sum'}
-        Combination method.
+        Data arrays.
+    mask : list of ndarray, optional
+        Mask arrays.
+    variance : list of ndarray, optional
+        Variance arrays.
     clipping_method : str, {'minmax', 'extrema', 'sigmaclip', 'none'}
         Clipping method.
+    method : str, {'mean', 'median', 'sum'}
+        Combination method.
+    num_threads : int
+        Number of threads.
 
     """
     if isinstance(data[0], NDData):
