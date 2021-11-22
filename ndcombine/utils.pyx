@@ -76,15 +76,15 @@ cdef float compute_median(const float data[],
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef float compute_mean_var(const float data[],
-                            const unsigned short mask[],
-                            size_t data_size) nogil:
-    cdef float m = 0
+cdef double compute_mean_var(const float data[],
+                             const unsigned short mask[],
+                             size_t data_size) nogil:
+    cdef double m = 0
     cdef size_t count = 0
     for i in range(data_size):
         if mask[i] == 0:
             count += 1
-            m += data[i]
+            m += <double>data[i]
     if count > 0:
         return m / (count * count)
     else:
@@ -94,15 +94,15 @@ cdef float compute_mean_var(const float data[],
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef float compute_mean(const float data[],
-                        const unsigned short mask[],
-                        size_t data_size) nogil:
-    cdef float m = 0
+cdef double compute_mean(const float data[],
+                         const unsigned short mask[],
+                         size_t data_size) nogil:
+    cdef double m = 0
     cdef size_t count = 0
     for i in range(data_size):
         if mask[i] == 0:
             count += 1
-            m += data[i]
+            m += <double>data[i]
     if count > 0:
         return m / count
     else:

@@ -56,7 +56,7 @@ def test_combine_array(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     out = combine_arrays(data, method='mean', clipping_method='sigclip')
 
-    assert out.data.dtype == np.float32
+    assert out.data.dtype == np.float64
     assert out.mask is None
     assert out.uncertainty is None
     assert np.isclose(out.data[0], 2.2)
@@ -69,7 +69,7 @@ def test_combine_nddata(dtype):
     data = [NDData(data=np.array([val], dtype=dtype)) for val in TEST_VALUES]
     out = combine_arrays(data, method='mean', clipping_method='sigclip')
 
-    assert out.data.dtype == np.float32
+    assert out.data.dtype == np.float64
     assert out.mask is None
     assert out.uncertainty is None
     assert np.isclose(out.data[0], 2.2)

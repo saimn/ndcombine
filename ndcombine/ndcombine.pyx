@@ -60,16 +60,16 @@ def ndcombine(float [:,:] data,
     else:
         raise ValueError
 
-    outarr = np.zeros(npix, dtype=np.float32, order='C')
+    outarr = np.zeros(npix, dtype=np.float64, order='C')
     outmaskarr = np.zeros((npoints, npix), dtype=np.uint16, order='C')
 
     if variance is not None:
-        outvararr = np.zeros(npix, dtype=np.float32, order='C')
+        outvararr = np.zeros(npix, dtype=np.float64, order='C')
     else:
         outvararr = None
 
-    cdef float [:] outdata = outarr
-    cdef float [:] outvar = outvararr
+    cdef double [:] outdata = outarr
+    cdef double [:] outvar = outvararr
     cdef unsigned short [:,:] outmask = outmaskarr
 
     with nogil, parallel(num_threads=num_threads):
