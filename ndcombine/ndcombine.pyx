@@ -36,27 +36,31 @@ def ndcombine(list list_of_data,
               size_t max_iters=100,
               int num_threads=0):
 
-    cdef ssize_t npoints = len(list_of_data)
-    cdef ssize_t npix = list_of_data[0].shape[0]
-    cdef ssize_t i, j
+    cdef:
+        ssize_t npoints = len(list_of_data)
+        ssize_t npix = list_of_data[0].shape[0]
+        ssize_t i, j
 
-    cdef float *tmpdata
-    cdef float *tmpvar
-    cdef unsigned short *tmpmask
+        int use_variance = 1 if list_of_var is not None else 0
 
-    cdef float **data = <float **> malloc(npoints * sizeof(float *))
-    cdef unsigned short **mask = <unsigned short **> malloc(
-        npoints * sizeof(unsigned short*))
-    cdef float **var = <float **> malloc(npoints * sizeof(float *))
+        float *tmpdata
+        float *tmpvar
+        unsigned short *tmpmask
 
-    cdef np.ndarray[np.float32_t, ndim=1, mode="c"] temp_float
-    cdef np.ndarray[np.uint16_t, ndim=1, mode="c"] temp_uint
+        float **data = <float **> malloc(npoints * sizeof(float *))
+        unsigned short **mask = <unsigned short **> malloc(
+            npoints * sizeof(unsigned short*))
+        float **var = <float **> malloc(npoints * sizeof(float *))
+
+        np.ndarray[np.float32_t, ndim=1, mode="c"] temp_float
+        np.ndarray[np.uint16_t, ndim=1, mode="c"] temp_uint
 
     for i in range(npoints):
         temp_float = list_of_data[i]
         data[i]= &temp_float[0]
-        temp_float = list_of_var[i]
-        var[i] = &temp_float[0]
+        if use_variance:
+            temp_float = list_of_var[i]
+            var[i] = &temp_float[0]
         temp_uint = list_of_mask[i]
         mask[i] = &temp_uint[0]
 
@@ -79,9 +83,7 @@ def ndcombine(list list_of_data,
     outarr = np.zeros(npix, dtype=np.float64, order='C')
     outmaskarr = np.zeros((npoints, npix), dtype=np.uint16, order='C')
 
-    cdef int use_variance = 1 if list_of_var is not None else 0
-
-    if use_variance is not None:
+    if use_variance:
         outvararr = np.zeros(npix, dtype=np.float64, order='C')
     else:
         outvararr = None

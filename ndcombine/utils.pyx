@@ -23,10 +23,11 @@ cdef float compute_median(const float data[],
     """
     One-dimensional true median, with optional masking.
     """
-    cdef size_t i, j, k, l, m, nused=0
-    cdef int ncycles, cycle
-    cdef float x, y, med=0.
-    cdef float *tmp = <float *> malloc(data_size * sizeof(float))
+    cdef:
+        size_t i, j, k, l, m, nused=0
+        int ncycles, cycle
+        float x, y, med=0.
+        float *tmp = <float *> malloc(data_size * sizeof(float))
 
     for i in range(data_size):
         if mask[i] == 0:
@@ -79,8 +80,9 @@ cdef float compute_median(const float data[],
 cdef double compute_mean_var(const float data[],
                              const unsigned short mask[],
                              size_t data_size) nogil:
-    cdef double m = 0
-    cdef size_t count = 0
+    cdef:
+        double m = 0
+        size_t count = 0
     for i in range(data_size):
         if mask[i] == 0:
             count += 1
@@ -97,8 +99,9 @@ cdef double compute_mean_var(const float data[],
 cdef double compute_mean(const float data[],
                          const unsigned short mask[],
                          size_t data_size) nogil:
-    cdef double m = 0
-    cdef size_t count = 0
+    cdef:
+        double m = 0
+        size_t count = 0
     for i in range(data_size):
         if mask[i] == 0:
             count += 1
@@ -118,8 +121,9 @@ cdef void compute_mean_std(const float data[],
                            int use_median,
                            size_t data_size) nogil:
 
-    cdef double mean, sum = 0, sumsq = 0
-    cdef size_t i, count = 0
+    cdef:
+        double mean, sum = 0, sumsq = 0
+        size_t i, count = 0
 
     for i in range(data_size):
         if mask[i] == 0:

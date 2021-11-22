@@ -9,6 +9,9 @@ try:
 except ImportError:
     __version__ = ''
 
+DATA_t = np.float32
+MASK_t = np.uint16
+
 
 def combine_arrays(
     data,
@@ -41,45 +44,36 @@ def combine_arrays(
         Number of threads.
 
     """
+    def flatten_arr(arr, dtype):
+        return arr.astype(dtype, copy=False).ravel()
+
     if isinstance(data[0], NDData):
         ndds = data
-        shape = ndds[0].shape
-        data = [nd.data.astype('float32', copy=False).ravel() for nd in ndds]
+        input_shape = ndds[0].data.shape
+        data, mask, variance = [], [], []
 
-        if ndds[0].mask is not None:
-            # For now suppose that all NDData objects have a mask if the
-            # first object has one.
-            mask = [
-                nd.mask.astype('uint16', copy=False).ravel() for nd in ndds
-            ]
-        else:
-            mask = None
+        for nd in ndds:
+            data.append(flatten_arr(nd.data, DATA_t))
+            if nd.mask is not None:
+                mask.append(flatten_arr(nd.mask, MASK_t))
+            if nd.uncertainty is not None:
+                if not isinstance(nd.uncertainty, VarianceUncertainty):
+                    raise ValueError('TODO')
+                variance.append(flatten_arr(nd.uncertainty.array, DATA_t))
 
-        if ndds[0].uncertainty is not None:
-            if not isinstance(ndds[0].uncertainty, VarianceUncertainty):
-                raise ValueError('TODO')
-            # For now suppose that all NDData objects have a mask if the
-            # first object has one.
-            variance = [
-                nd.uncertainty.array.astype('float32', copy=False).ravel()
-                for nd in ndds
-            ]
-        else:
-            variance = None
+        # Ensure mask and variance are set to None if empty
+        mask = mask or None
+        variance = variance or None
     else:
-        raise ValueError
-        # data = np.asarray(data, dtype=np.float32)
-        # shape = data.shape[1:]
-        # data = data.reshape(data.shape[0], -1)
-        # if mask is not None:
-        #     mask = np.asarray(mask, dtype=np.uint16)
-        #     mask = mask.reshape(mask.shape[0], -1)
-        # if variance is not None:
-        #     variance = np.asarray(variance, dtype=np.float32)
-        #     variance = variance.reshape(variance.shape[0], -1)
+        input_shape = data[0].shape
+        data = [flatten_arr(arr, DATA_t) for arr in data]
+        if mask is not None:
+            mask = [flatten_arr(arr, MASK_t) for arr in mask]
+        if variance is not None:
+            variance = [flatten_arr(arr, DATA_t) for arr in variance]
 
     if mask is None:
-        mask = list(np.zeros_like(data, dtype=np.uint16))
+        mask = list(np.zeros_like(data, dtype=MASK_t))
 
     lsigma, hsigma = clipping_limits
     max_iters = 100
@@ -87,19 +81,19 @@ def combine_arrays(
     outdata, outvar, outmask = ndcombine(
         data,
         mask,
+        list_of_var=variance,
         combine_method=method,
         hsigma=hsigma,
         lsigma=lsigma,
         max_iters=max_iters,
         num_threads=num_threads,
         reject_method=clipping_method,
-        list_of_var=variance,
     )
 
-    outdata = outdata.reshape(shape)
+    outdata = outdata.reshape(input_shape)
     if outvar is not None:
-        outvar = VarianceUncertainty(outvar.reshape(shape))
+        outvar = VarianceUncertainty(outvar.reshape(input_shape))
 
     out = NDData(outdata, uncertainty=outvar)
-    out.meta['REJMASK'] = outmask.reshape((-1, ) + shape)
+    out.meta['REJMASK'] = outmask.reshape((-1, ) + input_shape)
     return out
