@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from astropy.nddata import NDData
+from astropy.nddata import NDData, VarianceUncertainty
 from astropy.stats import sigma_clip as sigma_clip_ast
 from numpy.testing import assert_array_equal
 
@@ -62,6 +62,18 @@ def test_combine_array(dtype):
     assert np.isclose(out.data[0], 2.2)
     assert_array_equal(out.meta['REJMASK'].ravel(),
                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+    out = combine_arrays(data, method='mean', clipping_method='sigclip',
+                         clipping_limits=(2, 2))
+    assert np.isclose(out.data[0], 2)
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1])
+
+    out = combine_arrays(data, method='mean', clipping_method='sigclip',
+                         clipping_limits=(5, 5))
+    assert np.isclose(out.data[0], 11.09, atol=1e-2)
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -125,3 +137,46 @@ def test_combine_nddata_with_mask(dtype):
     assert np.isclose(out.data[0], 2.)
     assert_array_equal(out.meta['REJMASK'].ravel(),
                        [0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1])
+
+
+@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+def test_array_with_variance(dtype):
+    data = np.array([TEST_VALUES], dtype=dtype).T
+    var = np.ones_like(data).T
+    out = combine_arrays(data,
+                         variance=var,
+                         method='mean',
+                         clipping_method='sigclip')
+
+    assert isinstance(out.uncertainty, VarianceUncertainty)
+    assert np.isclose(out.data[0], 2.2)
+    assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+    var = np.random.normal(size=data.shape)
+    out = combine_arrays(data,
+                         variance=var,
+                         method='mean',
+                         clipping_method='sigclip')
+    assert np.isclose(out.data[0], 2.2)
+    assert np.isclose(out.uncertainty.array[0], np.mean(var[:10]) / 10)
+
+
+@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+def test_nddata_with_variance(dtype):
+    var = np.ones_like(TEST_VALUES).T
+    data = [
+        NDData(data=np.array([val], dtype=dtype),
+               uncertainty=VarianceUncertainty(np.array([var], dtype=dtype)))
+        for val, mask in zip(TEST_VALUES, var)
+    ]
+    out = combine_arrays(data,
+                         method='mean',
+                         clipping_method='sigclip')
+
+    assert isinstance(out.uncertainty, VarianceUncertainty)
+    assert np.isclose(out.data[0], 2.2)
+    assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])

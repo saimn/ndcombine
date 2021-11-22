@@ -14,7 +14,7 @@ def combine_arrays(
     data,
     mask=None,
     variance=None,
-    clip_limits=(3, 3),
+    clipping_limits=(3, 3),
     clipping_method='none',
     method='mean',
     num_threads=0,
@@ -79,7 +79,7 @@ def combine_arrays(
     else:
         mask = mask.reshape(mask.shape[0], -1)
 
-    lsigma, hsigma = clip_limits
+    lsigma, hsigma = clipping_limits
     max_iters = 100
 
     outdata, outvar, outmask = ndcombine(
