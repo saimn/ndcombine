@@ -78,7 +78,20 @@ def test_combine_nddata(dtype):
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
-def test_no_clipping(dtype):
+def test_combine_median(dtype):
+    data = np.array([TEST_VALUES], dtype=dtype).T
+    out = combine_arrays(data, method='median', clipping_method='sigclip')
+
+    assert out.data.dtype == np.float32
+    assert out.mask is None
+    assert out.uncertainty is None
+    assert np.isclose(out.data[0], 2.)
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+
+@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+def test_combine_no_clipping(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     out = combine_arrays(data, method='mean', clipping_method='none')
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
@@ -86,7 +99,7 @@ def test_no_clipping(dtype):
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
-def test_array_with_mask(dtype):
+def test_combine_array_with_mask(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     mask = np.array([[0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0]], dtype=bool).T
     out = combine_arrays(data,
@@ -100,7 +113,7 @@ def test_array_with_mask(dtype):
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
-def test_nddata_with_mask(dtype):
+def test_combine_nddata_with_mask(dtype):
     mask_values = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0]
     data = [
         NDData(data=np.array([val], dtype=dtype),
