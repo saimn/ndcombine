@@ -14,17 +14,41 @@ TEST_VALUES = [1, 2, 3, 2, 3, 2, 1, 4, 2, 2, 100]
 
 def test_sigclip():
     """Compare sigma_clip with Astropy."""
-
     data = np.array(TEST_VALUES, dtype=np.float32)
     mask1 = sigma_clip_ast(data).mask.astype(int)
     mask2 = sigma_clip(data, lsigma=3, hsigma=3, max_iters=10)
     assert_array_equal(mask1, mask2)
 
+    mask2 = sigma_clip(data, lsigma=3, hsigma=3, max_iters=0)
+    assert_array_equal(mask1, mask2)
+
+
+def test_sigclip_with_mask():
+    data = np.array(TEST_VALUES, dtype=np.float32)
     mask = np.zeros_like(data, dtype=np.uint16)
     mask[7] = 1
     mask1 = sigma_clip_ast(np.ma.array(data, mask=mask)).mask.astype(int)
     mask2 = sigma_clip(data, mask=mask, lsigma=3, hsigma=3, max_iters=10)
     assert_array_equal(mask1, mask2)
+
+
+def test_sigclip_with_var():
+    data = np.array(TEST_VALUES, dtype=np.float32)
+
+    var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1000], dtype=np.float32)
+    mask = sigma_clip(data, variance=var, lsigma=3, hsigma=3, max_iters=10,
+                      use_variance=True)
+    assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+    var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100_000], dtype=np.float32)
+    mask = sigma_clip(data, variance=var, lsigma=3, hsigma=3, max_iters=10,
+                      use_variance=True)
+    assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100_000], dtype=np.float32)
+    mask = sigma_clip(data, variance=var, lsigma=3, hsigma=3, max_iters=10,
+                      use_variance=False)
+    assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))

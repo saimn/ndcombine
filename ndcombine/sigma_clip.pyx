@@ -4,6 +4,7 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from libc.math cimport sqrt
+# from libc.stdio cimport printf
 #from cython cimport floating
 from ndcombine.utils cimport compute_mean_std
 
@@ -25,17 +26,16 @@ def sigma_clip(float [:] data,
     Parameters
     ----------
     data : float array
-        1D arrays of input, each made up of num_img points for each input pixel.
+        Input data.
     variance : float array
-        (add description)
+        Array of variances. If provided and use_variance=True, those values
+        will be used instead of computing the std from the data values.
     mask : unsigned short array
-        (add description)
+        Input mask.
     lsigma : double
         Number of standard deviations for clipping below the mean.
     hsigma : double
         Number of standard deviations for clipping above the mean.
-    has_var : int
-        Worry about the input variance array?
     max_iters : int
         Maximum number of iterations to compute
     use_median : int
@@ -46,8 +46,8 @@ def sigma_clip(float [:] data,
 
     Returns
     -------
-    mask : numpy.ndarray(np.float)
-        (add description)
+    mask : uint16 array
+        Output mask array.
 
     """
 
@@ -93,10 +93,10 @@ cdef void cy_sigma_clip(const float data [],
                         int use_variance,
                         int use_mad) nogil:
 
-    cdef size_t i, ngood=0, new_ngood, niter=0
-    cdef double avg, var, std
-    cdef float low_limit, high_limit
-    cdef double result[2]
+    cdef:
+        size_t i, ngood=0, new_ngood, niter=0
+        double avg, var, std, low_limit, high_limit
+        double result[2]
 
     if max_iters == 0:
         max_iters = 100
@@ -108,29 +108,35 @@ cdef void cy_sigma_clip(const float data [],
         if mask[i] == 0:
             ngood += 1
 
-    #if has_var and use_variance:
-    #    for i in range(npoints):
-    #        std = sqrt(variance[i])
-    #        if data[i] < avg-lsigma*std or data[i] > avg+hsigma*std:
-    #            outmask[i] = 1
-    #        else:
-    #            new_ngood += 1
-
     while niter < max_iters:
 
         compute_mean_std(data, mask, result, use_median, npoints)
         avg = result[0]
-        std = result[1]
 
         new_ngood = 0
-        low_limit = avg - lsigma * std
-        high_limit = avg + hsigma * std
 
-        for i in range(npoints):
-            if data[i] < low_limit or data[i] > high_limit:
-                mask[i] = 1
-            else:
-                new_ngood += 1
+        if has_var and use_variance:
+            # use the provided variance
+            for i in range(npoints):
+                std = sqrt(variance[i])
+                low_limit = avg - lsigma * std
+                high_limit = avg + hsigma * std
+
+                if data[i] < low_limit or data[i] > high_limit:
+                    mask[i] = 1
+                else:
+                    new_ngood += 1
+        else:
+            # use std computed from the data values
+            std = result[1]
+            low_limit = avg - lsigma * std
+            high_limit = avg + hsigma * std
+
+            for i in range(npoints):
+                if data[i] < low_limit or data[i] > high_limit:
+                    mask[i] = 1
+                else:
+                    new_ngood += 1
 
         if new_ngood == ngood:
             break
