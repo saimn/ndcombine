@@ -94,7 +94,7 @@ def test_combine_median(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     out = combine_arrays(data, method='median', clipping_method='sigclip')
 
-    assert out.data.dtype == np.float32
+    assert out.data.dtype == np.float64
     assert out.mask is None
     assert out.uncertainty is None
     assert np.isclose(out.data[0], 2.)
