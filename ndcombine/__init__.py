@@ -45,7 +45,7 @@ def combine_arrays(
 
     """
     def flatten_arr(arr, dtype):
-        return arr.astype(dtype, copy=False).ravel()
+        return arr.astype(dtype, order='C', copy=False).ravel()
 
     if isinstance(data[0], NDData):
         ndds = data
