@@ -36,7 +36,7 @@ def combine_arrays(
         Mask arrays.
     variance : list of ndarray, optional
         Variance arrays.
-    clipping_method : str, {'minmax', 'extrema', 'sigmaclip', 'none'}
+    clipping_method : str, {'minmax', 'extrema', 'sigclip', 'none'}
         Clipping method.
     method : str, {'mean', 'median', 'sum'}
         Combination method.

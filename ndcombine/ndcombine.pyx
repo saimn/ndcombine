@@ -101,6 +101,9 @@ def ndcombine(list list_of_data,
             for j in range(npoints):
                 tmpdata[j] = data[j][i]
                 tmpmask[j] = mask[j][i]
+            if use_variance:
+                for j in range(npoints):
+                    tmpvar[j] = var[j][i]
 
             #print('- iter ', i)
             #print('  data:', np.asarray(<float[:npoints]>tmpdata))
@@ -115,12 +118,14 @@ def ndcombine(list list_of_data,
             if combiner == MEAN:
                 outdata[i] = compute_mean(tmpdata, tmpmask, npoints)
                 if use_variance:
-                    for j in range(npoints):
-                        tmpvar[j] = var[j][i]
                     outvar[i] = compute_mean_var(tmpvar, tmpmask, npoints)
 
             elif combiner == MEDIAN:
                 outdata[i] = compute_median(tmpdata, tmpmask, npoints)
+                # According to Laplace, the uncertainty on the median is
+                # sqrt(2/pi) times greater than that on the mean
+                if use_variance:
+                    outvar[i] = 0.5 * np.pi * compute_mean_var(tmpvar, tmpmask, npoints)
 
             for j in range(npoints):
                 outmask[j, i] = tmpmask[j]
