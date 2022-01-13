@@ -19,13 +19,10 @@ def combine_arrays(
     variance=None,
     clipping_limits=(3, 3),
     clipping_method='none',
+    max_iters=100,
     method='mean',
     num_threads=0,
     # weights=None,
-    # clipping methods
-    # clip_extrema=False, nlow=1, nhigh=1,
-    # minmax_clip=False, minmax_clip_min=None, minmax_clip_max=None,
-    # sigma_clip=False, sigma_clip_low_thresh=3, sigma_clip_high_thresh=3,
 ):
     """
     Parameters:
@@ -36,14 +33,20 @@ def combine_arrays(
         Mask arrays.
     variance : list of ndarray, optional
         Variance arrays.
-    clipping_method : str, {'minmax', 'extrema', 'sigclip', 'none'}
+    clipping_limits : tuple of int
+        For sigma clipping, the lower and upper bounds: (sigma_lower,
+        sigma_upper).
+    clipping_method : str, {'sigclip', 'none'}
         Clipping method.
-    method : str, {'mean', 'median', 'sum'}
+    max_iters : int
+        Maximum number of iterations (for sigma clipping).
+    method : str, {'mean', 'median'}
         Combination method.
     num_threads : int
         Number of threads.
 
     """
+
     def flatten_arr(arr, dtype):
         return arr.astype(dtype, order='C', copy=False).ravel()
 
@@ -76,7 +79,6 @@ def combine_arrays(
         mask = list(np.zeros_like(data, dtype=MASK_t))
 
     lsigma, hsigma = clipping_limits
-    max_iters = 100
 
     outdata, outvar, outmask = ndcombine(
         data,

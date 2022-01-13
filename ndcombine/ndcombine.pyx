@@ -4,6 +4,7 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cython.parallel import prange, parallel
+from libc.math cimport M_PI_2
 from libc.stdlib cimport malloc, free
 
 from ndcombine.sigma_clip cimport cy_sigma_clip
@@ -125,7 +126,7 @@ def ndcombine(list list_of_data,
                 # According to Laplace, the uncertainty on the median is
                 # sqrt(2/pi) times greater than that on the mean
                 if use_variance:
-                    outvar[i] = 0.5 * np.pi * compute_mean_var(tmpvar, tmpmask, npoints)
+                    outvar[i] = M_PI_2 * compute_mean_var(tmpvar, tmpmask, npoints)
 
             for j in range(npoints):
                 outmask[j, i] = tmpmask[j]

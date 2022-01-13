@@ -20,7 +20,7 @@ def test_sigclip():
     assert_array_equal(mask1, mask2)
 
     mask2 = sigma_clip(data, lsigma=3, hsigma=3, max_iters=0)
-    assert_array_equal(mask1, mask2)
+    assert_array_equal(mask2, 0)
 
 
 def test_sigclip_with_mask():
@@ -75,6 +75,14 @@ def test_combine_array(dtype):
                          method='mean',
                          clipping_method='sigclip',
                          clipping_limits=(5, 5))
+    assert np.isclose(out.data[0], 11.09, atol=1e-2)
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+    out = combine_arrays(data,
+                         method='mean',
+                         clipping_method='sigclip',
+                         max_iters=0)
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
     assert_array_equal(out.meta['REJMASK'].ravel(),
                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])

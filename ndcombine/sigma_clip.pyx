@@ -98,9 +98,6 @@ cdef void cy_sigma_clip(const float data [],
         double avg, var, std, low_limit, high_limit
         double result[2]
 
-    if max_iters == 0:
-        max_iters = 100
-
     if use_mad: # TODO
         pass
 
