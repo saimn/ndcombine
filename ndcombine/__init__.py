@@ -35,7 +35,7 @@ def combine_arrays(
     clipping_limits : tuple of int
         For sigma clipping, the lower and upper bounds: (sigma_lower,
         sigma_upper).
-    clipping_method : str, {'sigclip', 'none'}
+    clipping_method : str, {'sigclip', 'varclip', 'none'}
         Clipping method.
     max_iters : int
         Maximum number of iterations (for sigma clipping).

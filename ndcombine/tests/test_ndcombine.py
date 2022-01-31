@@ -202,3 +202,32 @@ def test_nddata_with_variance(dtype):
     assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
     assert_array_equal(out.meta['REJMASK'].ravel(),
                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+
+@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+def test_combine_varclip(dtype):
+    data = np.array([TEST_VALUES], dtype=dtype).T
+    var = np.ones_like(data)
+    var[-1] = 100
+    out = combine_arrays(data,
+                         variance=var,
+                         method='mean',
+                         clipping_method='varclip')
+
+    assert isinstance(out.uncertainty, VarianceUncertainty)
+    assert np.isclose(out.data[0], 2.2)
+    assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+    var[-1] = 100_000
+    out = combine_arrays(data,
+                         variance=var,
+                         method='mean',
+                         clipping_method='varclip')
+
+    assert isinstance(out.uncertainty, VarianceUncertainty)
+    assert np.isclose(out.data[0], 11.09, atol=1e-2)
+    assert np.isclose(out.uncertainty.array[0], (100000+10)/11**2)
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])

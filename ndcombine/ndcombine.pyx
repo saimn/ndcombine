@@ -16,6 +16,7 @@ ctypedef unsigned short mask_t
 
 cdef enum rejection_methods:
     SIGCLIP,
+    VARCLIP,
     MINMAX,
     NONE
 
@@ -68,10 +69,12 @@ def ndcombine(list list_of_data,
     cdef rejection_methods rejector
     if reject_method == 'sigclip':
         rejector = SIGCLIP
+    elif reject_method == 'varclip':
+        rejector = VARCLIP
     elif reject_method == 'none':
         rejector = NONE
     else:
-        raise ValueError
+        raise ValueError(f'unknow rejection method: {reject_method}')
 
     cdef combine_methods combiner
     if combine_method == 'mean':
@@ -81,7 +84,7 @@ def ndcombine(list list_of_data,
     elif combine_method == 'sum':
         combiner = SUM
     else:
-        raise ValueError
+        raise ValueError(f'unknow combination method {combine_method}')
 
     outarr = np.zeros(npix, dtype=np.float64, order='C')
     outmaskarr = np.zeros((npoints, npix), dtype=np.uint16, order='C')
@@ -112,9 +115,9 @@ def ndcombine(list list_of_data,
             #print('  data:', np.asarray(<float[:npoints]>tmpdata))
             #print('  mask:', np.asarray(<unsigned short[:npoints]>tmpmask))
 
-            if rejector == SIGCLIP:
+            if rejector == SIGCLIP or rejector == VARCLIP:
                 cy_sigma_clip(tmpdata, tmpvar, tmpmask, npoints, lsigma, hsigma,
-                              0, max_iters, 1, 0, 0)
+                              use_variance, max_iters, 1, rejector == VARCLIP, 0)
 
             #print('  rejm:', np.asarray(<unsigned short[:npoints]>tmpmask))
 
