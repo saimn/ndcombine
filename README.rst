@@ -14,7 +14,7 @@ the computation at the C level with OpenMP.
 
 Currently the implemented algorithms are:
 
-- Combination: mean and median.
+- Combination: mean, median, sum.
 - Rejection: sigma clipping.
 
 If variance arrays are provided, the variance is propagated with the usual
@@ -22,6 +22,5 @@ uncertainty propagation formulas.
 
 Wishlist:
 
-- Combination algorithms: sum
 - Regression algorithms: minmax (value or number or percentile ?)
 - Weights, scaling factor or function, offsets (?)

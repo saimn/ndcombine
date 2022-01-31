@@ -1,4 +1,4 @@
-# cython: language_level=3
+# cython: boundscheck=False, nonecheck=False, wraparound=False, language_level=3, cdivision=True
 
 cimport cython
 from libc.math cimport sqrt
@@ -14,9 +14,6 @@ from libc.stdlib cimport malloc, free
 #    bint isnan "npy_isnan"(long double)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cdef float compute_median(const float data[],
                           const unsigned short mask[],
                           size_t data_size) nogil:
@@ -74,28 +71,6 @@ cdef float compute_median(const float data[],
     return med
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-cdef double compute_mean_var(const float data[],
-                             const unsigned short mask[],
-                             size_t data_size) nogil:
-    cdef:
-        double m = 0
-        size_t count = 0
-    for i in range(data_size):
-        if mask[i] == 0:
-            count += 1
-            m += <double>data[i]
-    if count > 0:
-        return m / (count * count)
-    else:
-        return NAN
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 cdef double compute_mean(const float data[],
                          const unsigned short mask[],
                          size_t data_size) nogil:
@@ -112,9 +87,22 @@ cdef double compute_mean(const float data[],
         return NAN
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+cdef double compute_mean_var(const float data[],
+                             const unsigned short mask[],
+                             size_t data_size) nogil:
+    cdef:
+        double m = 0
+        size_t count = 0
+    for i in range(data_size):
+        if mask[i] == 0:
+            count += 1
+            m += <double>data[i]
+    if count > 0:
+        return m / (count * count)
+    else:
+        return NAN
+
+
 cdef void compute_mean_std(const float data[],
                            const unsigned short mask[],
                            double result[2],
@@ -142,3 +130,19 @@ cdef void compute_mean_std(const float data[],
     else:
         result[0] = NAN
         result[1] = NAN
+
+
+cdef double compute_sum(const float data[],
+                        const unsigned short mask[],
+                        size_t data_size) nogil:
+    cdef:
+        double m = 0
+        size_t count = 0
+    for i in range(data_size):
+        if mask[i] == 0:
+            count += 1
+            m += <double>data[i]
+    if count > 0:
+        return m
+    else:
+        return NAN

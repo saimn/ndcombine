@@ -40,7 +40,7 @@ def combine_arrays(
         Clipping method.
     max_iters : int
         Maximum number of iterations (for sigma clipping).
-    method : str, {'mean', 'median'}
+    method : str, {'mean', 'median', 'sum'}
         Combination method.
     num_threads : int
         Number of threads.

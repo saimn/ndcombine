@@ -115,6 +115,19 @@ def test_combine_median(dtype):
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
+def test_combine_sum(dtype):
+    data = np.array([TEST_VALUES], dtype=dtype).T
+    out = combine_arrays(data, method='sum', clipping_method='sigclip')
+
+    assert out.data.dtype == np.float64
+    assert out.mask is None
+    assert out.uncertainty is None
+    assert np.isclose(out.data[0], 22)
+    assert_array_equal(out.meta['REJMASK'].ravel(),
+                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+
+@pytest.mark.parametrize('dtype', (np.float32, np.float64))
 def test_combine_no_clipping(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     out = combine_arrays(data, method='mean', clipping_method='none')

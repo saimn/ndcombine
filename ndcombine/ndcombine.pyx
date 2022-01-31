@@ -8,7 +8,8 @@ from libc.math cimport M_PI_2
 from libc.stdlib cimport malloc, free
 
 from ndcombine.sigma_clip cimport cy_sigma_clip
-from ndcombine.utils cimport compute_mean, compute_median, compute_mean_var
+from ndcombine.utils cimport (compute_mean, compute_median, compute_mean_var,
+                              compute_sum)
 
 np.import_array()
 
@@ -78,6 +79,8 @@ def ndcombine(list list_of_data,
         combiner = MEAN
     elif combine_method == 'median':
         combiner = MEDIAN
+    elif combine_method == 'sum':
+        combiner = SUM
     else:
         raise ValueError
 
@@ -120,6 +123,11 @@ def ndcombine(list list_of_data,
                 outdata[i] = compute_mean(tmpdata, tmpmask, npoints)
                 if use_variance:
                     outvar[i] = compute_mean_var(tmpvar, tmpmask, npoints)
+
+            elif combiner == SUM:
+                outdata[i] = compute_sum(tmpdata, tmpmask, npoints)
+                if use_variance:
+                    outvar[i] = compute_sum(tmpvar, tmpmask, npoints)
 
             elif combiner == MEDIAN:
                 outdata[i] = compute_median(tmpdata, tmpmask, npoints)
