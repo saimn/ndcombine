@@ -20,3 +20,15 @@ cdef void compute_mean_std(const float data[],
 cdef double compute_sum(const float data[],
                         const unsigned short mask[],
                         size_t data_size) nogil
+
+cdef void cy_sigma_clip(const float data [],
+                        const float variance [],
+                        unsigned short mask [],
+                        size_t npoints,
+                        double lsigma,
+                        double hsigma,
+                        int has_var,
+                        size_t max_iters,
+                        int use_median,
+                        int use_variance,
+                        int use_mad) nogil

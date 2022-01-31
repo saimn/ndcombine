@@ -7,9 +7,8 @@ from cython.parallel import prange, parallel
 from libc.math cimport M_PI_2
 from libc.stdlib cimport malloc, free
 
-from ndcombine.sigma_clip cimport cy_sigma_clip
 from ndcombine.utils cimport (compute_mean, compute_median, compute_mean_var,
-                              compute_sum)
+                              compute_sum, cy_sigma_clip)
 
 np.import_array()
 
@@ -144,3 +143,71 @@ def ndcombine(list list_of_data,
         free(tmpvar)
 
     return outarr, outvararr, outmaskarr
+
+
+def sigma_clip(float [:] data,
+               float [:] variance=None,
+               unsigned short [:] mask=None,
+               double lsigma=3,
+               double hsigma=3,
+               int max_iters=10,
+               int use_median=1,
+               int use_variance=0,
+               int use_mad=0):
+    """
+    Iterative sigma-clipping.
+
+    Parameters
+    ----------
+    data : float array
+        Input data.
+    variance : float array
+        Array of variances. If provided and use_variance=True, those values
+        will be used instead of computing the std from the data values.
+    mask : unsigned short array
+        Input mask.
+    lsigma : double
+        Number of standard deviations for clipping below the mean.
+    hsigma : double
+        Number of standard deviations for clipping above the mean.
+    max_iters : int
+        Maximum number of iterations to compute
+    use_median : int
+        Clip around the median rather than mean?
+    use_variance : int
+        Perform sigma-clipping using the pixel-to-pixel scatter, rather than
+        use the variance array?
+
+    Returns
+    -------
+    mask : uint16 array
+        Output mask array.
+
+    """
+
+    outmask = np.zeros(data.shape[0], dtype=np.uint16, order='C')
+    cdef unsigned short [:] outmask_view = outmask
+
+    cdef int has_var=0
+    cdef float* cvar=NULL
+
+    if variance is not None:
+        has_var = 1
+        cvar = &variance[0]
+
+    if mask is not None:
+        outmask[:] = mask
+
+    cy_sigma_clip(&data[0],
+                  cvar,
+                  &outmask_view[0],
+                  data.shape[0],
+                  lsigma,
+                  hsigma,
+                  has_var,
+                  max_iters,
+                  use_median,
+                  use_variance,
+                  use_mad)
+
+    return np.asarray(outmask)

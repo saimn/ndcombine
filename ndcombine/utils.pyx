@@ -4,7 +4,8 @@ cimport cython
 from libc.math cimport sqrt
 from libc.math cimport isnan, NAN
 from libc.stdlib cimport malloc, free
-#from cython cimport floating
+# from libc.stdio cimport printf
+# from cython cimport floating
 
 #cdef extern from "math.h":
 #    bint isnan(double x)
@@ -19,6 +20,7 @@ cdef float compute_median(const float data[],
                           size_t data_size) nogil:
     """
     One-dimensional true median, with optional masking.
+    From https://github.com/GeminiDRSoftware/DRAGONS/blob/master/gempy/library/cython_utils.pyx
     """
     cdef:
         size_t i, j, k, l, m, nused=0
@@ -146,3 +148,64 @@ cdef double compute_sum(const float data[],
         return m
     else:
         return NAN
+
+
+cdef void cy_sigma_clip(const float data [],
+                        const float variance [],
+                        unsigned short mask [],
+                        size_t npoints,
+                        double lsigma,
+                        double hsigma,
+                        int has_var,
+                        size_t max_iters,
+                        int use_median,
+                        int use_variance,
+                        int use_mad) nogil:
+
+    cdef:
+        size_t i, ngood=0, new_ngood, niter=0
+        double avg, var, std, low_limit, high_limit
+        double result[2]
+
+    if use_mad: # TODO
+        pass
+
+    for i in range(npoints):
+        if mask[i] == 0:
+            ngood += 1
+
+    while niter < max_iters:
+
+        compute_mean_std(data, mask, result, use_median, npoints)
+        avg = result[0]
+
+        new_ngood = 0
+
+        if has_var and use_variance:
+            # use the provided variance
+            for i in range(npoints):
+                std = sqrt(variance[i])
+                low_limit = avg - lsigma * std
+                high_limit = avg + hsigma * std
+
+                if data[i] < low_limit or data[i] > high_limit:
+                    mask[i] = 1
+                else:
+                    new_ngood += 1
+        else:
+            # use std computed from the data values
+            std = result[1]
+            low_limit = avg - lsigma * std
+            high_limit = avg + hsigma * std
+
+            for i in range(npoints):
+                if data[i] < low_limit or data[i] > high_limit:
+                    mask[i] = 1
+                else:
+                    new_ngood += 1
+
+        if new_ngood == ngood:
+            break
+
+        ngood = new_ngood
+        niter += 1
