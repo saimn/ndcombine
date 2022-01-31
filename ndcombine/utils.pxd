@@ -1,7 +1,7 @@
 # cython: language_level=3
-cdef float compute_median(const float data[],
-                          const unsigned short mask[],
-                          size_t data_size) nogil
+cdef double compute_median(const float data[],
+                           const unsigned short mask[],
+                           size_t data_size) nogil
 
 cdef double compute_mean(const float data[],
                          const unsigned short mask[],

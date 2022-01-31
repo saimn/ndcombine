@@ -15,9 +15,9 @@ from libc.stdlib cimport malloc, free
 #    bint isnan "npy_isnan"(long double)
 
 
-cdef float compute_median(const float data[],
-                          const unsigned short mask[],
-                          size_t data_size) nogil:
+cdef double compute_median(const float data[],
+                           const unsigned short mask[],
+                           size_t data_size) nogil:
     """
     One-dimensional true median, with optional masking.
     From https://github.com/GeminiDRSoftware/DRAGONS/blob/master/gempy/library/cython_utils.pyx
@@ -25,8 +25,8 @@ cdef float compute_median(const float data[],
     cdef:
         size_t i, j, k, l, m, nused=0
         int ncycles, cycle
-        float x, y, med=0.
-        float *tmp = <float *> malloc(data_size * sizeof(float))
+        double x, y, med=0.
+        double *tmp = <double *> malloc(data_size * sizeof(double))
 
     for i in range(data_size):
         if mask[i] == 0:
