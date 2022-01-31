@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pytest
 from astropy.nddata import NDData, VarianceUncertainty
@@ -36,17 +38,29 @@ def test_sigclip_with_var():
     data = np.array(TEST_VALUES, dtype=np.float32)
 
     var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1000], dtype=np.float32)
-    mask = sigma_clip(data, variance=var, lsigma=3, hsigma=3, max_iters=10,
+    mask = sigma_clip(data,
+                      variance=var,
+                      lsigma=3,
+                      hsigma=3,
+                      max_iters=10,
                       use_variance=True)
     assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
     var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100_000], dtype=np.float32)
-    mask = sigma_clip(data, variance=var, lsigma=3, hsigma=3, max_iters=10,
+    mask = sigma_clip(data,
+                      variance=var,
+                      lsigma=3,
+                      hsigma=3,
+                      max_iters=10,
                       use_variance=True)
     assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100_000], dtype=np.float32)
-    mask = sigma_clip(data, variance=var, lsigma=3, hsigma=3, max_iters=10,
+    mask = sigma_clip(data,
+                      variance=var,
+                      lsigma=3,
+                      hsigma=3,
+                      max_iters=10,
                       use_variance=False)
     assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
@@ -104,12 +118,17 @@ def test_combine_nddata(dtype):
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
 def test_combine_median(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
-    out = combine_arrays(data, method='median', clipping_method='sigclip')
+    var = np.ones_like(data)
+    out = combine_arrays(data,
+                         variance=var,
+                         method='median',
+                         clipping_method='sigclip')
 
     assert out.data.dtype == np.float64
     assert out.mask is None
-    assert out.uncertainty is None
     assert np.isclose(out.data[0], 2.)
+    assert np.isclose(out.uncertainty.array[0],
+                      1 / 10 * math.pi / 2)  # 10 valid values
     assert_array_equal(out.meta['REJMASK'].ravel(),
                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
@@ -117,12 +136,16 @@ def test_combine_median(dtype):
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
 def test_combine_sum(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
-    out = combine_arrays(data, method='sum', clipping_method='sigclip')
+    var = np.ones_like(data)
+    out = combine_arrays(data,
+                         variance=var,
+                         method='sum',
+                         clipping_method='sigclip')
 
     assert out.data.dtype == np.float64
     assert out.mask is None
-    assert out.uncertainty is None
     assert np.isclose(out.data[0], 22)
+    assert np.isclose(out.uncertainty.array[0], 10)  # 10 valid values
     assert_array_equal(out.meta['REJMASK'].ravel(),
                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
@@ -228,6 +251,18 @@ def test_combine_varclip(dtype):
 
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
-    assert np.isclose(out.uncertainty.array[0], (100000+10)/11**2)
+    assert np.isclose(out.uncertainty.array[0], (100000+10) / 11**2)
     assert_array_equal(out.meta['REJMASK'].ravel(),
                        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
+def test_unknow_rejector():
+    data = np.array([TEST_VALUES]).T
+    with pytest.raises(ValueError, match='unknow rejection method: foo'):
+        combine_arrays(data, method='mean', clipping_method='foo')
+
+
+def test_unknow_combiner():
+    data = np.array([TEST_VALUES]).T
+    with pytest.raises(ValueError, match='unknow combination method: foo'):
+        combine_arrays(data, method='foo')

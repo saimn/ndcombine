@@ -84,7 +84,7 @@ def ndcombine(list list_of_data,
     elif combine_method == 'sum':
         combiner = SUM
     else:
-        raise ValueError(f'unknow combination method {combine_method}')
+        raise ValueError(f'unknow combination method: {combine_method}')
 
     outarr = np.zeros(npix, dtype=np.float64, order='C')
     outmaskarr = np.zeros((npoints, npix), dtype=np.uint16, order='C')
