@@ -212,9 +212,12 @@ class Compare:
         else:
             return self.combiner(self.arrays, **kwargs)
 
-    def measure_times(self, parallel=False, nrun=5, verbose=True):
+    def measure_times(self, parallel=False, nrun=5, verbose=True,
+                      select_code=None):
         stats = []
         for code, bench in BENCHMARKS.items():
+            if select_code is not None and code != select_code:
+                continue
             for name, params in bench.items():
                 if code == 'ndcombine':
                     if parallel:
@@ -243,10 +246,12 @@ class Compare:
         tbl['cpu_time'].format = '%.2f'
         return tbl
 
-    def measure_memory(self, verbose=True):
+    def measure_memory(self, verbose=True, select_code=None):
         from memory_profiler import memory_usage
         stats = []
         for code, bench in BENCHMARKS.items():
+            if select_code is not None and code != select_code:
+                continue
             for name, params in bench.items():
                 setup_func = getattr(self, f'setup_{code}', None)
                 if setup_func:
@@ -280,6 +285,7 @@ if __name__ == "__main__":
     add_arg('mode', help='line_profile, memory, or cputime')
     add_arg('--datadir', default='~/data/combiner', help='Path for test data')
     add_arg('--dtype', help='dtype of input data')
+    add_arg('--code', help='code to profile (default all)')
     add_arg('--limit', type=int, help='Number of files to combine')
     add_arg('--nrun', type=int, help='Number of execution (for cputime)')
     add_arg('--parallel', action='store_true', help='Use OpenMP (ndcombine)')
@@ -293,8 +299,9 @@ if __name__ == "__main__":
     if args.mode == 'line_profile':
         comp.profile()
     elif args.mode == 'memory':
-        tbl = comp.measure_memory()
+        tbl = comp.measure_memory(select_code=args.code)
         tbl.pprint(max_lines=-1, max_width=-1)
     elif args.mode == 'cputime':
-        tbl = comp.measure_times(parallel=args.parallel, nrun=args.nrun)
+        tbl = comp.measure_times(parallel=args.parallel, nrun=args.nrun,
+                                 select_code=args.code)
         tbl.pprint(max_lines=-1, max_width=-1)
