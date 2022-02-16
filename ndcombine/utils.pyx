@@ -1,8 +1,7 @@
 # cython: boundscheck=False, nonecheck=False, wraparound=False, language_level=3, cdivision=True
 
 cimport cython
-from libc.math cimport sqrt
-from libc.math cimport isnan, NAN
+from libc.math cimport sqrt, isnan, NAN
 from libc.stdlib cimport malloc, free
 # from libc.stdio cimport printf
 # from cython cimport floating
@@ -15,47 +14,34 @@ from libc.stdlib cimport malloc, free
 #    bint isnan "npy_isnan"(long double)
 
 
-cdef double compute_median(const float data[],
-                           const unsigned short mask[],
-                           size_t data_size) nogil:
+cdef double compute_median(float data[], size_t data_size) nogil:
     """
     One-dimensional true median, with optional masking.
     From https://github.com/GeminiDRSoftware/DRAGONS/blob/master/gempy/library/cython_utils.pyx
     """
     cdef:
-        size_t i, j, k, l, m, nused=0
+        size_t i, j, k, l, m
         int ncycles, cycle
         double x, y, med=0.
-        double *tmp = <double *> malloc(data_size * sizeof(double))
 
-    for i in range(data_size):
-        if mask[i] == 0:
-            tmp[nused] = data[i]
-            nused += 1
-
-    if nused == 0:
-        for i in range(data_size):
-            tmp[i] = data[i]
-        nused = data_size
-
-    ncycles = 2 - nused % 2
+    ncycles = 2 - data_size % 2
     for cycle in range(0, ncycles):
-        k = (nused - 1) // 2 + cycle
+        k = (data_size - 1) // 2 + cycle
         l = 0
-        m = nused - 1
+        m = data_size - 1
         while (l < m):
-            x = tmp[k]
+            x = data[k]
             i = l
             j = m
             while True:
-                while (tmp[i] < x):
+                while (data[i] < x):
                     i += 1
-                while (x < tmp[j]):
+                while (x < data[j]):
                     j -= 1
                 if i <= j:
-                    y = tmp[i]
-                    tmp[i] = tmp[j]
-                    tmp[j] = y
+                    y = data[i]
+                    data[i] = data[j]
+                    data[j] = y
                     i += 1
                     j -= 1
                 if i > j:
@@ -65,147 +51,92 @@ cdef double compute_median(const float data[],
             if k < i:
                 m = j
         if cycle == 0:
-            med = tmp[k]
+            med = data[k]
         else:
-            med = 0.5 * (med + tmp[k])
+            med = 0.5 * (med + data[k])
 
-    free(tmp)
     return med
 
 
-cdef double compute_mean(const float data[],
-                         const unsigned short mask[],
-                         size_t data_size) nogil:
-    cdef:
-        double m = 0
-        size_t count = 0
-    for i in range(data_size):
-        if mask[i] == 0:
-            count += 1
-            m += <double>data[i]
-    if count > 0:
-        return m / count
-    else:
-        return NAN
-
-
-cdef double compute_mean_var(const float data[],
-                             const unsigned short mask[],
-                             size_t data_size) nogil:
-    cdef:
-        double m = 0
-        size_t count = 0
-    for i in range(data_size):
-        if mask[i] == 0:
-            count += 1
-            m += <double>data[i]
-    if count > 0:
-        return m / (count * count)
-    else:
-        return NAN
-
-
-cdef void compute_mean_std(const float data[],
-                           const unsigned short mask[],
+cdef void compute_mean_std(float data[],
                            double result[2],
                            int use_median,
                            size_t data_size) nogil:
 
     cdef:
         double mean, sum = 0, sumsq = 0
-        size_t i, count = 0
+        size_t i
 
     for i in range(data_size):
-        if mask[i] == 0:
-            sum += data[i]
-            sumsq += data[i] * data[i]
-            count += 1
+        sum += data[i]
+        sumsq += data[i] * data[i]
 
-    if count > 0:
-        mean = sum / count
-        if use_median:
-            result[0] = <double>compute_median(data, mask, data_size)
-        else:
-            result[0] = mean
-
-        result[1] = sqrt(sumsq / count - mean*mean)
+    mean = sum / data_size
+    if use_median:
+        result[0] = <double>compute_median(data, data_size)
     else:
-        result[0] = NAN
-        result[1] = NAN
+        result[0] = mean
+
+    result[1] = sqrt(sumsq / data_size - mean*mean)
 
 
-cdef double compute_sum(const float data[],
-                        const unsigned short mask[],
-                        size_t data_size) nogil:
-    cdef:
-        double m = 0
-        size_t count = 0
+cdef inline double compute_sum(const float data[], size_t data_size) nogil:
+    cdef double m = 0
     for i in range(data_size):
-        if mask[i] == 0:
-            count += 1
-            m += <double>data[i]
-    if count > 0:
-        return m
-    else:
-        return NAN
+        m += <double>data[i]
+    return m
 
 
-cdef void cy_sigma_clip(const float data [],
-                        const float variance [],
-                        unsigned short mask [],
-                        size_t npoints,
-                        double lsigma,
-                        double hsigma,
-                        int has_var,
-                        size_t max_iters,
-                        int use_median,
-                        int use_variance,
-                        int use_mad) nogil:
+cdef size_t cy_sigma_clip(float data [],
+                          const float variance [],
+                          size_t data_size,
+                          double lsigma,
+                          double hsigma,
+                          int has_var,
+                          size_t max_iters,
+                          int use_median,
+                          int use_variance,
+                          int use_mad) nogil:
 
     cdef:
-        size_t i, ngood=0, new_ngood, niter=0
+        size_t i, ngood=data_size, nused, niter=0
         double avg, var, std, low_limit, high_limit
         double result[2]
 
     if use_mad: # TODO
         pass
 
-    for i in range(npoints):
-        if mask[i] == 0:
-            ngood += 1
-
     while niter < max_iters:
 
-        compute_mean_std(data, mask, result, use_median, npoints)
+        compute_mean_std(data, result, use_median, ngood)
         avg = result[0]
-
-        new_ngood = 0
+        nused = 0
 
         if has_var and use_variance:
             # use the provided variance
-            for i in range(npoints):
+            for i in range(ngood):
                 std = sqrt(variance[i])
                 low_limit = avg - lsigma * std
                 high_limit = avg + hsigma * std
 
-                if data[i] < low_limit or data[i] > high_limit:
-                    mask[i] = 1
-                else:
-                    new_ngood += 1
+                if data[i] >= low_limit and data[i] <= high_limit:
+                    data[nused] = data[i]
+                    nused += 1
         else:
             # use std computed from the data values
             std = result[1]
             low_limit = avg - lsigma * std
             high_limit = avg + hsigma * std
 
-            for i in range(npoints):
-                if data[i] < low_limit or data[i] > high_limit:
-                    mask[i] = 1
-                else:
-                    new_ngood += 1
+            for i in range(ngood):
+                if data[i] >= low_limit and data[i] <= high_limit:
+                    data[nused] = data[i]
+                    nused += 1
 
-        if new_ngood == ngood:
+        if nused == ngood:
             break
 
-        ngood = new_ngood
+        ngood = nused
         niter += 1
+
+    return ngood

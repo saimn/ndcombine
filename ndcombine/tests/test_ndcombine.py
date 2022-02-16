@@ -6,7 +6,7 @@ from astropy.nddata import NDData, VarianceUncertainty
 from astropy.stats import sigma_clip as sigma_clip_ast
 from numpy.testing import assert_array_equal
 
-from ndcombine import combine_arrays, sigma_clip
+from ndcombine import combine_arrays  #, sigma_clip
 
 # Test values:
 # - without outlier: mean=2.2, median=2.0, std=0.87, sum=22.0, len=10
@@ -14,55 +14,55 @@ from ndcombine import combine_arrays, sigma_clip
 TEST_VALUES = [1, 2, 3, 2, 3, 2, 1, 4, 2, 2, 100]
 
 
-def test_sigclip():
-    """Compare sigma_clip with Astropy."""
-    data = np.array(TEST_VALUES, dtype=np.float32)
-    mask1 = sigma_clip_ast(data).mask.astype(int)
-    mask2 = sigma_clip(data, lsigma=3, hsigma=3, max_iters=10)
-    assert_array_equal(mask1, mask2)
+# def test_sigclip():
+#     """Compare sigma_clip with Astropy."""
+#     data = np.array(TEST_VALUES, dtype=np.float32)
+#     mask1 = sigma_clip_ast(data).mask.astype(int)
+#     mask2 = sigma_clip(data, lsigma=3, hsigma=3, max_iters=10)
+#     assert_array_equal(mask1, mask2)
 
-    mask2 = sigma_clip(data, lsigma=3, hsigma=3, max_iters=0)
-    assert_array_equal(mask2, 0)
-
-
-def test_sigclip_with_mask():
-    data = np.array(TEST_VALUES, dtype=np.float32)
-    mask = np.zeros_like(data, dtype=np.uint16)
-    mask[7] = 1
-    mask1 = sigma_clip_ast(np.ma.array(data, mask=mask)).mask.astype(int)
-    mask2 = sigma_clip(data, mask=mask, lsigma=3, hsigma=3, max_iters=10)
-    assert_array_equal(mask1, mask2)
+#     mask2 = sigma_clip(data, lsigma=3, hsigma=3, max_iters=0)
+#     assert_array_equal(mask2, 0)
 
 
-def test_sigclip_with_var():
-    data = np.array(TEST_VALUES, dtype=np.float32)
+# def test_sigclip_with_mask():
+#     data = np.array(TEST_VALUES, dtype=np.float32)
+#     mask = np.zeros_like(data, dtype=np.uint16)
+#     mask[7] = 1
+#     mask1 = sigma_clip_ast(np.ma.array(data, mask=mask)).mask.astype(int)
+#     mask2 = sigma_clip(data, mask=mask, lsigma=3, hsigma=3, max_iters=10)
+#     assert_array_equal(mask1, mask2)
 
-    var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1000], dtype=np.float32)
-    mask = sigma_clip(data,
-                      variance=var,
-                      lsigma=3,
-                      hsigma=3,
-                      max_iters=10,
-                      use_variance=True)
-    assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
-    var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100_000], dtype=np.float32)
-    mask = sigma_clip(data,
-                      variance=var,
-                      lsigma=3,
-                      hsigma=3,
-                      max_iters=10,
-                      use_variance=True)
-    assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+# def test_sigclip_with_var():
+#     data = np.array(TEST_VALUES, dtype=np.float32)
 
-    var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100_000], dtype=np.float32)
-    mask = sigma_clip(data,
-                      variance=var,
-                      lsigma=3,
-                      hsigma=3,
-                      max_iters=10,
-                      use_variance=False)
-    assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+#     var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1000], dtype=np.float32)
+#     mask = sigma_clip(data,
+#                       variance=var,
+#                       lsigma=3,
+#                       hsigma=3,
+#                       max_iters=10,
+#                       use_variance=True)
+#     assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+#     var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100_000], dtype=np.float32)
+#     mask = sigma_clip(data,
+#                       variance=var,
+#                       lsigma=3,
+#                       hsigma=3,
+#                       max_iters=10,
+#                       use_variance=True)
+#     assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+#     var = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 100_000], dtype=np.float32)
+#     mask = sigma_clip(data,
+#                       variance=var,
+#                       lsigma=3,
+#                       hsigma=3,
+#                       max_iters=10,
+#                       use_variance=False)
+#     assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -74,32 +74,28 @@ def test_combine_array(dtype):
     assert out.mask is None
     assert out.uncertainty is None
     assert np.isclose(out.data[0], 2.2)
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 1
 
     out = combine_arrays(data,
                          method='mean',
                          clipping_method='sigclip',
                          clipping_limits=(2, 2))
     assert np.isclose(out.data[0], 2)
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 2
 
     out = combine_arrays(data,
                          method='mean',
                          clipping_method='sigclip',
                          clipping_limits=(5, 5))
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert out.meta['REJMAP'][0] == 0
 
     out = combine_arrays(data,
                          method='mean',
                          clipping_method='sigclip',
                          max_iters=0)
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert out.meta['REJMAP'][0] == 0
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -111,8 +107,7 @@ def test_combine_nddata(dtype):
     assert out.mask is None
     assert out.uncertainty is None
     assert np.isclose(out.data[0], 2.2)
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 1
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -129,8 +124,7 @@ def test_combine_median(dtype):
     assert np.isclose(out.data[0], 2.)
     assert np.isclose(out.uncertainty.array[0],
                       1 / 10 * math.pi / 2)  # 10 valid values
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 1
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -146,8 +140,7 @@ def test_combine_sum(dtype):
     assert out.mask is None
     assert np.isclose(out.data[0], 22)
     assert np.isclose(out.uncertainty.array[0], 10)  # 10 valid values
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 1
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -155,7 +148,7 @@ def test_combine_no_clipping(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     out = combine_arrays(data, method='mean', clipping_method='none')
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
-    assert_array_equal(out.meta['REJMASK'].ravel(), 0)
+    assert out.meta['REJMAP'][0] == 0
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -168,8 +161,7 @@ def test_combine_array_with_mask(dtype):
                          clipping_method='sigclip')
 
     assert np.isclose(out.data[0], 2.)
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 4
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -183,8 +175,7 @@ def test_combine_nddata_with_mask(dtype):
     out = combine_arrays(data, method='mean', clipping_method='sigclip')
 
     assert np.isclose(out.data[0], 2.)
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 4
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -199,8 +190,7 @@ def test_array_with_variance(dtype):
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 2.2)
     assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 1
 
     var = np.random.normal(size=data.shape)
     out = combine_arrays(data,
@@ -223,8 +213,7 @@ def test_nddata_with_variance(dtype):
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 2.2)
     assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 1
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -240,8 +229,7 @@ def test_combine_varclip(dtype):
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 2.2)
     assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
+    assert out.meta['REJMAP'][0] == 1
 
     var[-1] = 100_000
     out = combine_arrays(data,
@@ -252,8 +240,7 @@ def test_combine_varclip(dtype):
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
     assert np.isclose(out.uncertainty.array[0], (100000+10) / 11**2)
-    assert_array_equal(out.meta['REJMASK'].ravel(),
-                       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    assert out.meta['REJMAP'][0] == 0
 
 
 def test_unknow_rejector():

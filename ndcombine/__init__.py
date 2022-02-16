@@ -1,7 +1,7 @@
 import numpy as np
 from astropy.nddata import NDData, VarianceUncertainty
 
-from .ndcombine import ndcombine, sigma_clip  # noqa
+from .ndcombine import ndcombine
 
 try:
     from .version import version as __version__
@@ -96,5 +96,5 @@ def combine_arrays(
         outvar = VarianceUncertainty(outvar.reshape(input_shape))
 
     out = NDData(outdata, uncertainty=outvar)
-    out.meta['REJMASK'] = outmask.reshape((-1, ) + input_shape)
+    out.meta['REJMAP'] = len(data) - outmask.reshape(input_shape)
     return out
