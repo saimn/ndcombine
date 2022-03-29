@@ -1,5 +1,5 @@
-ndcombine: Fast ND arrays combination
--------------------------------------
+NDCombine: Fast ND arrays combination
+=====================================
 
 .. image:: https://github.com/saimn/ndcombine/actions/workflows/python-tests.yml/badge.svg
     :target: https://github.com/saimn/ndcombine/actions
@@ -8,7 +8,7 @@ ndcombine: Fast ND arrays combination
     :target: https://github.com/saimn/ndcombine
     :alt: Coverage Status
 
-ndcombine is a Python package to combine efficiently n-dimensional arrays such
+NDCombine is a Python package to combine efficiently n-dimensional arrays such
 as images or datacubes. It is implemented in Cython which allows to parallelize
 the computation at the C level with OpenMP.
 
@@ -24,3 +24,11 @@ Wishlist:
 
 - Rejection algorithms: minmax (value or number or percentile ?)
 - Weights, scaling factor or function, offsets (?)
+
+
+Links
+^^^^^
+
+- `Documentation <https://ndcombine.readthedocs.io/>`_
+- `PyPI <https://pypi.org/project/ndcombine/>`_
+- `Github <https://github.com/saimn/ndcombine>`_

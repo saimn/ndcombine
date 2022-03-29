@@ -24,8 +24,8 @@ def combine_arrays(
     # weights=None,
 ):
     """
-    Parameters:
-    -----------
+    Parameters
+    ----------
     data : list of ndarray or list of NDData
         Data arrays.
     mask : list of ndarray, optional
