@@ -8,6 +8,8 @@ try:
 except ImportError:
     __version__ = ''
 
+__all__ = ['combine_arrays']
+
 DATA_t = np.float32
 MASK_t = np.uint16
 
@@ -24,6 +26,8 @@ def combine_arrays(
     # weights=None,
 ):
     """
+    Run the combination with an optional rejection.
+
     Parameters
     ----------
     data : list of ndarray or list of NDData

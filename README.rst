@@ -1,6 +1,3 @@
-NDCombine: Fast ND arrays combination
-=====================================
-
 .. image:: https://github.com/saimn/ndcombine/actions/workflows/python-tests.yml/badge.svg
     :target: https://github.com/saimn/ndcombine/actions
     :alt: CI Status
@@ -27,7 +24,7 @@ Wishlist:
 
 
 Links
-^^^^^
+-----
 
 - `Documentation <https://ndcombine.readthedocs.io/>`_
 - `PyPI <https://pypi.org/project/ndcombine/>`_

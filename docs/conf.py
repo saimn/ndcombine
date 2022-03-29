@@ -30,13 +30,12 @@ version = '.'.join(release.split('.')[:2])
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.viewcode',
     'sphinx.ext.doctest',
+    'sphinx.ext.ifconfig',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
-    'sphinx_automodapi.automodapi',
-    'sphinx_automodapi.smart_resolver',
-    'numpydoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
