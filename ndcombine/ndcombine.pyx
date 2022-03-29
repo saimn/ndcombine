@@ -4,11 +4,11 @@ import numpy as np
 cimport numpy as np
 cimport cython
 from cython.parallel import prange, parallel
-from libc.math cimport M_PI_2
+from libc.math cimport M_PI_2, NAN
 from libc.stdlib cimport malloc, free
+from libc.stdio cimport printf
 
-from ndcombine.utils cimport (compute_mean, compute_median, compute_mean_var,
-                              compute_sum, cy_sigma_clip)
+from ndcombine.utils cimport compute_median, compute_sum, cy_sigma_clip
 
 np.import_array()
 
@@ -41,13 +41,12 @@ def ndcombine(list list_of_data,
     cdef:
         ssize_t npoints = len(list_of_data)
         ssize_t npix = list_of_data[0].shape[0]
-        ssize_t i, j
+        ssize_t i, j, nvalid
 
         int use_variance = 1 if list_of_var is not None else 0
 
         float *tmpdata
         float *tmpvar
-        unsigned short *tmpmask
 
         float **data = <float **> malloc(npoints * sizeof(float *))
         unsigned short **mask = <unsigned short **> malloc(
@@ -87,7 +86,7 @@ def ndcombine(list list_of_data,
         raise ValueError(f'unknow combination method: {combine_method}')
 
     outarr = np.zeros(npix, dtype=np.float64, order='C')
-    outmaskarr = np.zeros((npoints, npix), dtype=np.uint16, order='C')
+    outmaskarr = np.zeros(npix, dtype=np.uint16, order='C')
 
     if use_variance:
         outvararr = np.zeros(npix, dtype=np.float64, order='C')
@@ -96,121 +95,60 @@ def ndcombine(list list_of_data,
 
     cdef double [:] outdata = outarr
     cdef double [:] outvar = outvararr
-    cdef unsigned short [:,:] outmask = outmaskarr
+    cdef unsigned short [:] outmask = outmaskarr
 
     with nogil, parallel(num_threads=num_threads):
         tmpdata = <float *> malloc(npoints * sizeof(float))
         tmpvar = <float *> malloc(npoints * sizeof(float))
-        tmpmask = <unsigned short *> malloc(npoints * sizeof(unsigned short))
 
         for i in prange(npix):
+            nvalid = 0
             for j in range(npoints):
-                tmpdata[j] = data[j][i]
-                tmpmask[j] = mask[j][i]
-            if use_variance:
-                for j in range(npoints):
-                    tmpvar[j] = var[j][i]
+                if mask[j][i] == 0:
+                    tmpdata[nvalid] = data[j][i]
+                    if use_variance:
+                        tmpvar[nvalid] = var[j][i]
+                    nvalid = nvalid + 1
 
-            #print('- iter ', i)
-            #print('  data:', np.asarray(<float[:npoints]>tmpdata))
-            #print('  mask:', np.asarray(<unsigned short[:npoints]>tmpmask))
+            # printf('- pix %ld:\n', i)
+            # printf('  %ld values: ', nvalid)
+            # for j in range(nvalid):
+            #     printf('%.2f ', tmpdata[j])
+            # printf('\n')
+            # # printf('  data:', np.asarray(<float[:nvalid]>tmpdata))
 
             if rejector == SIGCLIP or rejector == VARCLIP:
-                cy_sigma_clip(tmpdata, tmpvar, tmpmask, npoints, lsigma, hsigma,
-                              use_variance, max_iters, 1, rejector == VARCLIP, 0)
+                nvalid = cy_sigma_clip(tmpdata, tmpvar, nvalid, lsigma, hsigma,
+                                       use_variance, max_iters, 1, rejector == VARCLIP, 0)
 
-            #print('  rejm:', np.asarray(<unsigned short[:npoints]>tmpmask))
+            # printf('  %ld values: ', nvalid)
+            # for j in range(nvalid):
+            #     printf('%.2f ', tmpdata[j])
+            # printf('\n')
+
+            if nvalid == 0:
+                outdata[i] = NAN
 
             if combiner == MEAN:
-                outdata[i] = compute_mean(tmpdata, tmpmask, npoints)
+                outdata[i] = compute_sum(tmpdata, nvalid) / nvalid
                 if use_variance:
-                    outvar[i] = compute_mean_var(tmpvar, tmpmask, npoints)
+                    outvar[i] = compute_sum(tmpvar, nvalid) / (nvalid * nvalid)
 
             elif combiner == SUM:
-                outdata[i] = compute_sum(tmpdata, tmpmask, npoints)
+                outdata[i] = compute_sum(tmpdata, nvalid)
                 if use_variance:
-                    outvar[i] = compute_sum(tmpvar, tmpmask, npoints)
+                    outvar[i] = compute_sum(tmpvar, nvalid)
 
             elif combiner == MEDIAN:
-                outdata[i] = compute_median(tmpdata, tmpmask, npoints)
+                outdata[i] = compute_median(tmpdata, nvalid)
                 # According to Laplace, the uncertainty on the median is
                 # sqrt(2/pi) times greater than that on the mean
                 if use_variance:
-                    outvar[i] = M_PI_2 * compute_mean_var(tmpvar, tmpmask, npoints)
+                    outvar[i] = M_PI_2 * compute_sum(tmpvar, nvalid) / (nvalid * nvalid)
 
-            for j in range(npoints):
-                outmask[j, i] = tmpmask[j]
+            outmask[i] = nvalid
 
         free(tmpdata)
-        free(tmpmask)
         free(tmpvar)
 
     return outarr, outvararr, outmaskarr
-
-
-def sigma_clip(float [:] data,
-               float [:] variance=None,
-               unsigned short [:] mask=None,
-               double lsigma=3,
-               double hsigma=3,
-               int max_iters=10,
-               int use_median=1,
-               int use_variance=0,
-               int use_mad=0):
-    """
-    Iterative sigma-clipping.
-
-    Parameters
-    ----------
-    data : float array
-        Input data.
-    variance : float array
-        Array of variances. If provided and use_variance=True, those values
-        will be used instead of computing the std from the data values.
-    mask : unsigned short array
-        Input mask.
-    lsigma : double
-        Number of standard deviations for clipping below the mean.
-    hsigma : double
-        Number of standard deviations for clipping above the mean.
-    max_iters : int
-        Maximum number of iterations to compute
-    use_median : int
-        Clip around the median rather than mean?
-    use_variance : int
-        Perform sigma-clipping using the pixel-to-pixel scatter, rather than
-        use the variance array?
-
-    Returns
-    -------
-    mask : uint16 array
-        Output mask array.
-
-    """
-
-    outmask = np.zeros(data.shape[0], dtype=np.uint16, order='C')
-    cdef unsigned short [:] outmask_view = outmask
-
-    cdef int has_var=0
-    cdef float* cvar=NULL
-
-    if variance is not None:
-        has_var = 1
-        cvar = &variance[0]
-
-    if mask is not None:
-        outmask[:] = mask
-
-    cy_sigma_clip(&data[0],
-                  cvar,
-                  &outmask_view[0],
-                  data.shape[0],
-                  lsigma,
-                  hsigma,
-                  has_var,
-                  max_iters,
-                  use_median,
-                  use_variance,
-                  use_mad)
-
-    return np.asarray(outmask)
