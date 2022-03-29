@@ -3,10 +3,10 @@ import math
 import numpy as np
 import pytest
 from astropy.nddata import NDData, VarianceUncertainty
-from astropy.stats import sigma_clip as sigma_clip_ast
-from numpy.testing import assert_array_equal
+# from astropy.stats import sigma_clip as sigma_clip_ast
+# from numpy.testing import assert_array_equal
 
-from ndcombine import combine_arrays  #, sigma_clip
+from ndcombine import combine_arrays  # , sigma_clip
 
 # Test values:
 # - without outlier: mean=2.2, median=2.0, std=0.87, sum=22.0, len=10
