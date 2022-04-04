@@ -22,6 +22,7 @@ def gaussian(image_shape, x0, y0, brightness, fwhm):
 def make_fake_data(nimg,
                    outdir,
                    nsources=100,
+                   ncosmics=100,
                    shape=(2048, 2048),
                    dtype=np.float32):
     # Set a seed so that the tests are repeatable
@@ -50,9 +51,10 @@ def make_fake_data(nimg,
         imdata += np.random.normal(0.0, 10.0, size=shape)
 
         # Add 100 fake cosmic rays
-        cr_x = np.random.randint(low=5, high=shape[0] - 5, size=100)
-        cr_y = np.random.randint(low=5, high=shape[1] - 5, size=100)
-        cr_brightnesses = np.random.uniform(low=1000.0, high=30000.0, size=100)
+        cr_x = np.random.randint(low=5, high=shape[0] - 5, size=ncosmics)
+        cr_y = np.random.randint(low=5, high=shape[1] - 5, size=ncosmics)
+        cr_brightnesses = np.random.uniform(low=1000.0, high=30000.0,
+                                            size=ncosmics)
         imdata[cr_y, cr_x] += cr_brightnesses
         imdata = imdata.astype('f4')
 
