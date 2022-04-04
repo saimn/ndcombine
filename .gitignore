@@ -15,9 +15,10 @@ __pycache__
 */version.py
 */cython_version.py
 cython_debug
+docs/savefig
 htmlcov
-.coverage
 MANIFEST
+.coverage
 .ipynb_checkpoints
 
 # Sphinx
