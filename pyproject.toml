@@ -1,11 +1,66 @@
 [build-system]
-requires = ["setuptools",
-            "setuptools_scm",
-            "wheel",
-            "cython",
-            "oldest-supported-numpy",
-            "extension-helpers"]
+requires = ["setuptools>=42",
+            "setuptools_scm>=6.2",
+            "cython>=3.0.0,<3.1.0",
+            "numpy>=1.25",
+            "extension-helpers==1.*"]
 build-backend = 'setuptools.build_meta'
 
+[project]
+name = "ndcombine"
+description = "Fast ND arrays combination"
+readme = "README.rst"
+requires-python = ">=3.9"
+license = {text = "BSD 3-Clause License"}
+authors = [
+    {name = "Simon Conseil", email = "contact@saimon.org"},
+]
+dependencies = ["astropy", "numpy"]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+docs = ["ipython", "nbsphinx", "sphinx-astropy"]
+test = ["Cython", "coverage[toml]", "pytest-astropy"]
+
+[project.urls]
+repository = "https://github.com/saimn/ndcombine"
+
 [tool.setuptools_scm]
-write_to = "ndcombine/version.py"
+write_to = "ndcombine/_version.py"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.coverage]
+[tool.coverage.run]
+plugins = ["Cython.Coverage"]
+source = ["ndcombine"]
+parallel = true
+omit = [
+  "ndcombine/_version*",
+  "*/ndcombine/_version*",
+]
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover", # Have to re-enable the standard pragma
+  "except ImportError", # Don't complain about packages we have installed
+  "raise AssertionError", # Don't complain if tests don't hit assertion code
+  "raise NotImplementedError",
+  "'def main(.*):'", # Don't complain about script hooks
+  "if __name__ == .__main__.:",
+  "def _ipython_key_completions_", # Don't complain about IPython completion
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "docs"]
+filterwarnings = [
+    # action:message:category:module:lineno
+    # "ignore:.*Call to deprecated Parameter testval.*:DeprecationWarning:pymc3",
+]
+# doctest_plus = enabled
+# text_file_format = rst
+# addopts = --doctest-rst
+
