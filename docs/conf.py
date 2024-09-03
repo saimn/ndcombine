@@ -16,7 +16,7 @@ from importlib.metadata import version
 # -- Project information -----------------------------------------------------
 
 project = "NDCombine"
-copyright = "2022, Simon Conseil"
+copyright = "2021-2024, Simon Conseil"
 author = "Simon Conseil"
 
 # The full version, including alpha/beta/rc tags

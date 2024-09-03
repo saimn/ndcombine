@@ -1,4 +1,4 @@
-Copyright 2021-2022 Simon Conseil
+Copyright 2021-2024 Simon Conseil
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
