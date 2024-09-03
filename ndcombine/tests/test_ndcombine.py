@@ -3,9 +3,9 @@ import math
 import numpy as np
 import pytest
 from astropy.nddata import NDData, VarianceUncertainty
+
 # from astropy.stats import sigma_clip as sigma_clip_ast
 # from numpy.testing import assert_array_equal
-
 from ndcombine import combine_arrays  # , sigma_clip
 
 # Test values:
@@ -65,191 +65,165 @@ TEST_VALUES = [1, 2, 3, 2, 3, 2, 1, 4, 2, 2, 100]
 #     assert_array_equal(mask, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1])
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_combine_array(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
-    out = combine_arrays(data, method='mean', clipping_method='sigclip')
+    out = combine_arrays(data, method="mean", clipping_method="sigclip")
 
     assert out.data.dtype == np.float64
     assert out.mask is None
     assert out.uncertainty is None
     assert np.isclose(out.data[0], 2.2)
-    assert out.meta['REJMAP'][0] == 1
+    assert out.meta["REJMAP"][0] == 1
 
-    out = combine_arrays(data,
-                         method='mean',
-                         clipping_method='sigclip',
-                         clipping_limits=(2, 2))
+    out = combine_arrays(
+        data, method="mean", clipping_method="sigclip", clipping_limits=(2, 2)
+    )
     assert np.isclose(out.data[0], 2)
-    assert out.meta['REJMAP'][0] == 2
+    assert out.meta["REJMAP"][0] == 2
 
-    out = combine_arrays(data,
-                         method='mean',
-                         clipping_method='sigclip',
-                         clipping_limits=(5, 5))
+    out = combine_arrays(
+        data, method="mean", clipping_method="sigclip", clipping_limits=(5, 5)
+    )
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
-    assert out.meta['REJMAP'][0] == 0
+    assert out.meta["REJMAP"][0] == 0
 
-    out = combine_arrays(data,
-                         method='mean',
-                         clipping_method='sigclip',
-                         max_iters=0)
+    out = combine_arrays(data, method="mean", clipping_method="sigclip", max_iters=0)
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
-    assert out.meta['REJMAP'][0] == 0
+    assert out.meta["REJMAP"][0] == 0
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_combine_nddata(dtype):
     data = [NDData(data=np.array([val], dtype=dtype)) for val in TEST_VALUES]
-    out = combine_arrays(data, method='mean', clipping_method='sigclip')
+    out = combine_arrays(data, method="mean", clipping_method="sigclip")
 
     assert out.data.dtype == np.float64
     assert out.mask is None
     assert out.uncertainty is None
     assert np.isclose(out.data[0], 2.2)
-    assert out.meta['REJMAP'][0] == 1
+    assert out.meta["REJMAP"][0] == 1
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_combine_median(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     var = np.ones_like(data)
-    out = combine_arrays(data,
-                         variance=var,
-                         method='median',
-                         clipping_method='sigclip')
+    out = combine_arrays(data, variance=var, method="median", clipping_method="sigclip")
 
     assert out.data.dtype == np.float64
     assert out.mask is None
-    assert np.isclose(out.data[0], 2.)
-    assert np.isclose(out.uncertainty.array[0],
-                      1 / 10 * math.pi / 2)  # 10 valid values
-    assert out.meta['REJMAP'][0] == 1
+    assert np.isclose(out.data[0], 2.0)
+    assert np.isclose(out.uncertainty.array[0], 1 / 10 * math.pi / 2)  # 10 valid values
+    assert out.meta["REJMAP"][0] == 1
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_combine_sum(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     var = np.ones_like(data)
-    out = combine_arrays(data,
-                         variance=var,
-                         method='sum',
-                         clipping_method='sigclip')
+    out = combine_arrays(data, variance=var, method="sum", clipping_method="sigclip")
 
     assert out.data.dtype == np.float64
     assert out.mask is None
     assert np.isclose(out.data[0], 22)
     assert np.isclose(out.uncertainty.array[0], 10)  # 10 valid values
-    assert out.meta['REJMAP'][0] == 1
+    assert out.meta["REJMAP"][0] == 1
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_combine_no_clipping(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
-    out = combine_arrays(data, method='mean', clipping_method='none')
+    out = combine_arrays(data, method="mean", clipping_method="none")
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
-    assert out.meta['REJMAP'][0] == 0
+    assert out.meta["REJMAP"][0] == 0
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_combine_array_with_mask(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     mask = np.array([[0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0]], dtype=bool).T
-    out = combine_arrays(data,
-                         mask=mask,
-                         method='mean',
-                         clipping_method='sigclip')
+    out = combine_arrays(data, mask=mask, method="mean", clipping_method="sigclip")
 
-    assert np.isclose(out.data[0], 2.)
-    assert out.meta['REJMAP'][0] == 4
+    assert np.isclose(out.data[0], 2.0)
+    assert out.meta["REJMAP"][0] == 4
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_combine_nddata_with_mask(dtype):
     mask_values = [0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0]
     data = [
-        NDData(data=np.array([val], dtype=dtype),
-               mask=np.array([mask], dtype=bool))
+        NDData(data=np.array([val], dtype=dtype), mask=np.array([mask], dtype=bool))
         for val, mask in zip(TEST_VALUES, mask_values)
     ]
-    out = combine_arrays(data, method='mean', clipping_method='sigclip')
+    out = combine_arrays(data, method="mean", clipping_method="sigclip")
 
-    assert np.isclose(out.data[0], 2.)
-    assert out.meta['REJMAP'][0] == 4
+    assert np.isclose(out.data[0], 2.0)
+    assert out.meta["REJMAP"][0] == 4
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_array_with_variance(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     var = np.ones_like(data)
-    out = combine_arrays(data,
-                         variance=var,
-                         method='mean',
-                         clipping_method='sigclip')
+    out = combine_arrays(data, variance=var, method="mean", clipping_method="sigclip")
 
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 2.2)
     assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
-    assert out.meta['REJMAP'][0] == 1
+    assert out.meta["REJMAP"][0] == 1
 
     var = np.random.normal(size=data.shape)
-    out = combine_arrays(data,
-                         variance=var,
-                         method='mean',
-                         clipping_method='sigclip')
+    out = combine_arrays(data, variance=var, method="mean", clipping_method="sigclip")
     assert np.isclose(out.data[0], 2.2)
     assert np.isclose(out.uncertainty.array[0], np.mean(var[:10]) / 10)
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_nddata_with_variance(dtype):
     data = [
-        NDData(data=np.array([val], dtype=dtype),
-               uncertainty=VarianceUncertainty(np.array([1], dtype=dtype)))
+        NDData(
+            data=np.array([val], dtype=dtype),
+            uncertainty=VarianceUncertainty(np.array([1], dtype=dtype)),
+        )
         for val in TEST_VALUES
     ]
-    out = combine_arrays(data, method='mean', clipping_method='sigclip')
+    out = combine_arrays(data, method="mean", clipping_method="sigclip")
 
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 2.2)
     assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
-    assert out.meta['REJMAP'][0] == 1
+    assert out.meta["REJMAP"][0] == 1
 
 
-@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+@pytest.mark.parametrize("dtype", (np.float32, np.float64))
 def test_combine_varclip(dtype):
     data = np.array([TEST_VALUES], dtype=dtype).T
     var = np.ones_like(data)
     var[-1] = 100
-    out = combine_arrays(data,
-                         variance=var,
-                         method='mean',
-                         clipping_method='varclip')
+    out = combine_arrays(data, variance=var, method="mean", clipping_method="varclip")
 
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 2.2)
     assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
-    assert out.meta['REJMAP'][0] == 1
+    assert out.meta["REJMAP"][0] == 1
 
     var[-1] = 100_000
-    out = combine_arrays(data,
-                         variance=var,
-                         method='mean',
-                         clipping_method='varclip')
+    out = combine_arrays(data, variance=var, method="mean", clipping_method="varclip")
 
     assert isinstance(out.uncertainty, VarianceUncertainty)
     assert np.isclose(out.data[0], 11.09, atol=1e-2)
-    assert np.isclose(out.uncertainty.array[0], (100000+10) / 11**2)
-    assert out.meta['REJMAP'][0] == 0
+    assert np.isclose(out.uncertainty.array[0], (100000 + 10) / 11**2)
+    assert out.meta["REJMAP"][0] == 0
 
 
 def test_unknow_rejector():
     data = np.array([TEST_VALUES]).T
-    with pytest.raises(ValueError, match='unknow rejection method: foo'):
-        combine_arrays(data, method='mean', clipping_method='foo')
+    with pytest.raises(ValueError, match="unknow rejection method: foo"):
+        combine_arrays(data, method="mean", clipping_method="foo")
 
 
 def test_unknow_combiner():
     data = np.array([TEST_VALUES]).T
-    with pytest.raises(ValueError, match='unknow combination method: foo'):
-        combine_arrays(data, method='foo')
+    with pytest.raises(ValueError, match="unknow combination method: foo"):
+        combine_arrays(data, method="foo")

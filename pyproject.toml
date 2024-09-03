@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=42",
-            "setuptools_scm>=6.2",
+            "setuptools_scm[toml]>=6.2",
             "cython>=3.0.0",
             "numpy>=2.0.0",
             "extension-helpers==1.*"]
@@ -27,10 +27,6 @@ repository = "https://github.com/saimn/ndcombine"
 
 [tool.setuptools_scm]
 write_to = "ndcombine/_version.py"
-
-[tool.black]
-line-length = 88
-target-version = ['py39']
 
 [tool.coverage]
 [tool.coverage.run]
@@ -64,3 +60,13 @@ filterwarnings = [
 # text_file_format = rst
 # addopts = --doctest-rst
 
+[tool.ruff.lint]
+select = [
+  "E", "F", "W", # flake8
+  "I",           # isort
+  "UP",          # pyupgrade
+  # "NPY",         # numpy
+]
+unfixable = [
+  "F841", # Removes unused variables
+]

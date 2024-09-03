@@ -6,9 +6,9 @@ from .ndcombine import ndcombine
 try:
     from ._version import version as __version__
 except ImportError:
-    __version__ = ''
+    __version__ = ""
 
-__all__ = ['combine_arrays']
+__all__ = ["combine_arrays"]
 
 DATA_t = np.float32
 MASK_t = np.uint16
@@ -19,9 +19,9 @@ def combine_arrays(
     mask=None,
     variance=None,
     clipping_limits=(3, 3),
-    clipping_method='none',
+    clipping_method="none",
     max_iters=100,
-    method='mean',
+    method="mean",
     num_threads=0,
     # weights=None,
 ):
@@ -51,7 +51,7 @@ def combine_arrays(
     """
 
     def flatten_arr(arr, dtype):
-        return arr.astype(dtype, order='C', copy=False).ravel()
+        return arr.astype(dtype, order="C", copy=False).ravel()
 
     if isinstance(data[0], NDData):
         ndds = data
@@ -64,7 +64,7 @@ def combine_arrays(
                 mask.append(flatten_arr(nd.mask, MASK_t))
             if nd.uncertainty is not None:
                 if not isinstance(nd.uncertainty, VarianceUncertainty):
-                    raise ValueError('TODO')
+                    raise ValueError("TODO")
                 variance.append(flatten_arr(nd.uncertainty.array, DATA_t))
 
         # Ensure mask and variance are set to None if empty
@@ -100,5 +100,5 @@ def combine_arrays(
         outvar = VarianceUncertainty(outvar.reshape(input_shape))
 
     out = NDData(outdata, uncertainty=outvar)
-    out.meta['REJMAP'] = len(data) - outmask.reshape(input_shape)
+    out.meta["REJMAP"] = len(data) - outmask.reshape(input_shape)
     return out

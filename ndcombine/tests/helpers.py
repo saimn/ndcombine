@@ -15,16 +15,13 @@ def gaussian(image_shape, x0, y0, brightness, fwhm):
     sig = fwhm / 2.35482
     normfactor = brightness / 2.0 / np.pi * sig**-2.0
     exponent = -0.5 * sig**-2.0
-    exponent *= (x2d - x0)**2.0 + (y2d - y0)**2.0
+    exponent *= (x2d - x0) ** 2.0 + (y2d - y0) ** 2.0
     return normfactor * np.exp(exponent)
 
 
-def make_fake_data(nimg,
-                   outdir,
-                   nsources=100,
-                   ncosmics=100,
-                   shape=(2048, 2048),
-                   dtype=np.float32):
+def make_fake_data(
+    nimg, outdir, nsources=100, ncosmics=100, shape=(2048, 2048), dtype=np.float32
+):
     # Set a seed so that the tests are repeatable
     np.random.seed(200)
 
@@ -32,7 +29,7 @@ def make_fake_data(nimg,
     sources = np.zeros(shape, dtype=np.float32)
     xx = np.random.uniform(low=0.0, high=shape[0], size=nsources)
     yy = np.random.uniform(low=0.0, high=shape[1], size=nsources)
-    brightness = np.random.uniform(low=1000., high=30000., size=nsources)
+    brightness = np.random.uniform(low=1000.0, high=30000.0, size=nsources)
     for x, y, b in zip(xx, yy, brightness):
         sources += gaussian(shape, x, y, b, 5)
 
@@ -53,18 +50,16 @@ def make_fake_data(nimg,
         # Add 100 fake cosmic rays
         cr_x = np.random.randint(low=5, high=shape[0] - 5, size=ncosmics)
         cr_y = np.random.randint(low=5, high=shape[1] - 5, size=ncosmics)
-        cr_brightnesses = np.random.uniform(low=1000.0, high=30000.0,
-                                            size=ncosmics)
+        cr_brightnesses = np.random.uniform(low=1000.0, high=30000.0, size=ncosmics)
         imdata[cr_y, cr_x] += cr_brightnesses
-        imdata = imdata.astype('f4')
+        imdata = imdata.astype("f4")
 
         # Make a mask where the detected cosmic rays should be
         # crmask = np.zeros(shape, dtype=np.bool)
         # crmask[cr_y, cr_x] = True
 
-        ccd = CCDData(imdata,
-                      uncertainty=VarianceUncertainty(imdata / 10),
-                      unit="electron")
-        ccd.write(os.path.join(outdir, f'image-{i+1:02d}.fits'),
-                  overwrite=True)
-        print('.', end='')
+        ccd = CCDData(
+            imdata, uncertainty=VarianceUncertainty(imdata / 10), unit="electron"
+        )
+        ccd.write(os.path.join(outdir, f"image-{i+1:02d}.fits"), overwrite=True)
+        print(".", end="")
