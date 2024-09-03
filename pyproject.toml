@@ -37,15 +37,17 @@ write_to = "src/ndcombine/_version.py"
 
 [tool.coverage]
 [tool.coverage.run]
-plugins = ["Cython.Coverage"]
 source = ["ndcombine"]
+plugins = ["Cython.Coverage"]
 parallel = true
 omit = [
+  "ndcombine/_version*",
   "*/ndcombine/_version*",
 ]
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 [tool.coverage.report]
+ignore_errors = true
 exclude_lines = [
   "pragma: no cover", # Have to re-enable the standard pragma
   "except ImportError", # Don't complain about packages we have installed
