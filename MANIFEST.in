@@ -4,8 +4,8 @@ include setup.cfg
 include LICENSE.rst
 include pyproject.toml
 
-recursive-exclude ndcombine *.c
-recursive-include ndcombine *.pyx *.pxd
+recursive-exclude src/ndcombine *.c
+recursive-include src/ndcombine *.pyx *.pxd
 recursive-include docs *
 recursive-include licenses *
 recursive-include scripts *

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42",
+requires = ["setuptools>=61.2",
             "setuptools_scm[toml]>=6.2",
             "cython>=3.0.0",
             "numpy>=2.0.0",
@@ -25,8 +25,15 @@ test = ["Cython", "coverage[toml]", "pytest-astropy"]
 [project.urls]
 repository = "https://github.com/saimn/ndcombine"
 
+[tool.setuptools]
+license-files = ["LICENSE.rst"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = [ "data/*" ]
+
 [tool.setuptools_scm]
-write_to = "ndcombine/_version.py"
+write_to = "src/ndcombine/_version.py"
 
 [tool.coverage]
 [tool.coverage.run]
@@ -34,7 +41,6 @@ plugins = ["Cython.Coverage"]
 source = ["ndcombine"]
 parallel = true
 omit = [
-  "ndcombine/_version*",
   "*/ndcombine/_version*",
 ]
 [tool.coverage.paths]
@@ -51,7 +57,6 @@ exclude_lines = [
 ]
 
 [tool.pytest.ini_options]
-# testpaths = ["tests", "docs"]
 filterwarnings = [
     # action:message:category:module:lineno
     # "ignore:.*Call to deprecated Parameter testval.*:DeprecationWarning:pymc3",

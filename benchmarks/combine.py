@@ -118,7 +118,7 @@ class Compare:
         if not datadir.exists():
             print("Creating test data")
             datadir.mkdir(parents=True)
-            from ndcombine.tests.helpers import make_fake_data
+            from ndcombine.utils import make_fake_data
 
             make_fake_data(20, datadir, nsources=500)
 

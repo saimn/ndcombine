@@ -12,7 +12,7 @@ from setuptools import Extension, setup
 
 extension = Extension(
     "*",
-    ["ndcombine/*.pyx"],
+    ["src/ndcombine/*.pyx"],
     include_dirs=[np.get_include()],
     define_macros=[("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")],
 )
