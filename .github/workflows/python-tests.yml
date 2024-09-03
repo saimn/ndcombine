@@ -50,7 +50,7 @@ jobs:
         COVERAGE=1 pip install -e .[test]
         coverage run -m pytest
     - name: Upload coverage to codecov
-      if: "! matrix.coverage"
+      if: "matrix.coverage"
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
