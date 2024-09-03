@@ -14,7 +14,7 @@ from libc.stdlib cimport malloc, free
 #    bint isnan "npy_isnan"(long double)
 
 
-cdef double compute_median(float data[], size_t data_size) nogil:
+cdef double compute_median(float data[], size_t data_size) noexcept nogil:
     """
     One-dimensional true median, with optional masking.
     From https://github.com/GeminiDRSoftware/DRAGONS/blob/master/gempy/library/cython_utils.pyx
@@ -61,7 +61,7 @@ cdef double compute_median(float data[], size_t data_size) nogil:
 cdef void compute_mean_std(float data[],
                            double result[2],
                            int use_median,
-                           size_t data_size) nogil:
+                           size_t data_size) noexcept nogil:
 
     cdef:
         double mean, sum = 0, sumsq = 0
@@ -80,7 +80,7 @@ cdef void compute_mean_std(float data[],
     result[1] = sqrt(sumsq / data_size - mean*mean)
 
 
-cdef inline double compute_sum(const float data[], size_t data_size) nogil:
+cdef inline double compute_sum(const float data[], size_t data_size) noexcept nogil:
     cdef double m = 0
     for i in range(data_size):
         m += <double>data[i]
@@ -96,7 +96,7 @@ cdef size_t cy_sigma_clip(float data [],
                           size_t max_iters,
                           int use_median,
                           int use_variance,
-                          int use_mad) nogil:
+                          int use_mad) noexcept nogil:
 
     cdef:
         size_t i, ngood=data_size, nused, niter=0
