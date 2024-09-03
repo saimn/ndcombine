@@ -23,13 +23,13 @@ def make_fake_data(
     nimg, outdir, nsources=100, ncosmics=100, shape=(2048, 2048), dtype=np.float32
 ):
     # Set a seed so that the tests are repeatable
-    np.random.seed(200)
+    rng = np.random.default_rng(200)
 
     # Add some fake sources
     sources = np.zeros(shape, dtype=np.float32)
-    xx = np.random.uniform(low=0.0, high=shape[0], size=nsources)
-    yy = np.random.uniform(low=0.0, high=shape[1], size=nsources)
-    brightness = np.random.uniform(low=1000.0, high=30000.0, size=nsources)
+    xx = rng.uniform(low=0.0, high=shape[0], size=nsources)
+    yy = rng.uniform(low=0.0, high=shape[1], size=nsources)
+    brightness = rng.uniform(low=1000.0, high=30000.0, size=nsources)
     for x, y, b in zip(xx, yy, brightness):
         sources += gaussian(shape, x, y, b, 5)
 
@@ -42,15 +42,15 @@ def make_fake_data(
         imdata += sources
 
         # Add the poisson noise
-        imdata = np.float32(np.random.poisson(imdata))
+        imdata = np.float32(rng.poisson(imdata))
 
         # Add readnoise
-        imdata += np.random.normal(0.0, 10.0, size=shape)
+        imdata += rng.normal(0.0, 10.0, size=shape)
 
         # Add 100 fake cosmic rays
-        cr_x = np.random.randint(low=5, high=shape[0] - 5, size=ncosmics)
-        cr_y = np.random.randint(low=5, high=shape[1] - 5, size=ncosmics)
-        cr_brightnesses = np.random.uniform(low=1000.0, high=30000.0, size=ncosmics)
+        cr_x = rng.integers(low=5, high=shape[0] - 5, size=ncosmics)
+        cr_y = rng.integers(low=5, high=shape[1] - 5, size=ncosmics)
+        cr_brightnesses = rng.uniform(low=1000.0, high=30000.0, size=ncosmics)
         imdata[cr_y, cr_x] += cr_brightnesses
         imdata = imdata.astype("f4")
 

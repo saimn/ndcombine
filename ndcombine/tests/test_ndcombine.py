@@ -173,7 +173,7 @@ def test_array_with_variance(dtype):
     assert np.isclose(out.uncertainty.array[0], 1 / 10)  # 10 valid values
     assert out.meta["REJMAP"][0] == 1
 
-    var = np.random.normal(size=data.shape)
+    var = np.random.default_rng().normal(size=data.shape)
     out = combine_arrays(data, variance=var, method="mean", clipping_method="sigclip")
     assert np.isclose(out.data[0], 2.2)
     assert np.isclose(out.uncertainty.array[0], np.mean(var[:10]) / 10)

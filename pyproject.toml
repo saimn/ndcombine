@@ -51,7 +51,7 @@ exclude_lines = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "docs"]
+# testpaths = ["tests", "docs"]
 filterwarnings = [
     # action:message:category:module:lineno
     # "ignore:.*Call to deprecated Parameter testval.*:DeprecationWarning:pymc3",
@@ -65,7 +65,7 @@ select = [
   "E", "F", "W", # flake8
   "I",           # isort
   "UP",          # pyupgrade
-  # "NPY",         # numpy
+  "NPY",         # numpy
 ]
 unfixable = [
   "F841", # Removes unused variables

@@ -18,8 +18,8 @@ def test_median(size):
 
     print("Generate fake data")
     shape = (10, size, size)
-    np.random.seed(42)
-    data = np.random.normal(size=shape).astype(np.float32)
+    rng = np.random.default_rng(42)
+    data = rng.normal(size=shape).astype(np.float32)
     mask = np.zeros(shape, dtype=np.uint16)
     data = data.reshape(shape[0], -1)
     mask = mask.reshape(shape[0], -1)
