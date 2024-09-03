@@ -17,7 +17,7 @@ def test_median(size):
     global data, mask, datamasked, list_of_data, list_of_mask
 
     print("Generate fake data")
-    shape = (10, size, size)
+    shape = (11, size, size)
     rng = np.random.default_rng(42)
     data = rng.normal(size=shape).astype(np.float32)
     mask = np.zeros(shape, dtype=np.uint16)

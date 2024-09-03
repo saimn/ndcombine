@@ -265,7 +265,7 @@ if __name__ == "__main__":
     add_arg("--dtype", help="dtype of input data")
     add_arg("--code", help="code to profile (default all)")
     add_arg("--limit", type=int, help="Number of files to combine")
-    add_arg("--nrun", type=int, help="Number of execution (for cputime)")
+    add_arg("--nrun", type=int, default=5, help="Number of execution (for cputime)")
     add_arg("--parallel", action="store_true", help="Use OpenMP (ndcombine)")
     add_arg("--variance", action="store_true", help="Use the variance plane")
     args = parser.parse_args()
